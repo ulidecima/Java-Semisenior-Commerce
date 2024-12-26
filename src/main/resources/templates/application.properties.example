@@ -1,0 +1,18 @@
+# Nombre de la aplicación
+spring.application.name=Java-Semisenior-Commerce
+
+# Configuración de la base de datos
+spring.datasource.url=jdbc:postgresql://localhost:5432/tu_base_datos
+spring.datasource.username=tu_usuario
+spring.datasource.password=tu_contraseña
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# Configuración de JPA
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+# Swagger/OpenAPI
+springdoc.api-docs.enabled=true
+springdoc.swagger-ui.enabled=true
+springdoc.swagger-ui.path=/swagger-ui
+springdoc.api-docs.path=/api-docs
