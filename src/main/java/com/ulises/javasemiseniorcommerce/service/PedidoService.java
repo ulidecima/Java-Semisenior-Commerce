@@ -13,6 +13,8 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -172,7 +174,7 @@ public class PedidoService {
     }
 
     @Transactional
-    public List<PedidoDto> getPedidosByMail(String email) {
+    public List<PedidoDto> getPedidosByMail(String email, int page, int size) {
         logger.info("Buscando pedidos para el usuario con email: {}", email);
 
         UsuarioModel usuario = usuarioRepository.findByEmail(email)
@@ -181,7 +183,9 @@ public class PedidoService {
                     return new UserNotFoundException("Usuario no encontrado con email: " + email);
                 });
 
-        List<PedidoDto> pedidos = pedidoRepository.findAllByUsuario_Id(usuario.getId()).stream()
+        Pageable pageable = PageRequest.of(page, size);
+
+        List<PedidoDto> pedidos = pedidoRepository.findAllByUsuario_Id(usuario.getId(), pageable).stream()
                 .map(this::mapToDto)
                 .toList();
 

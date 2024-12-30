@@ -57,10 +57,12 @@ public class ProductoController {
      */
     @Operation(summary = "Obtener todos los productos", description = "Devuelve todos los productos y su informacion.")
     @GetMapping
-    public ResponseEntity<?> getAllProductos() {
+    public ResponseEntity<?> getAllProductos(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
         logger.info("GET_ALL_PRODUCTOS_REQUEST");
         try {
-            List<ProductoDto> productos = productoService.getAllProductos();
+            List<ProductoDto> productos = productoService.getAllProductos(page, size);
             logger.info("GET_ALL_PRODUCTOS_SUCCESS: Se listaron {} productos", productos.size());
             return ResponseEntity.ok(productos);
         } catch (Exception e) {
@@ -118,6 +120,25 @@ public class ProductoController {
         } catch (Exception e) {
             logger.error("UPDATE_PRODUCTO_ERROR: Hubo un error inesperado al actualizar el producto con ID: {}. Error: {}", id, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("Error inesperado al actualizar el producto.", false));
+        }
+    }
+
+    @Operation(summary = "Buscar productos", description = "Busca productos mediante una palabra clave y precios de producto.")
+    @GetMapping("/search")
+    public ResponseEntity<?> searchProductos(
+            @RequestParam(required = false) String palabrasClave,
+            @RequestParam(required = false) Double precioMin,
+            @RequestParam(required = false) Double precioMax,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        logger.info("GET_PRODUCTOS_BY_SEARCH: Palabras clave: {}", palabrasClave);
+        try {
+            List<ProductoDto> productos =  productoService.getProductosBySearch(palabrasClave, precioMin, precioMax, page, size);
+            logger.info("GET_PRODUCTOS_BY_SEARCH_SUCCESS: Se listaron {} productos", productos.size());
+            return ResponseEntity.ok(productos);
+        } catch (Exception e) {
+            logger.error("GET_PRODUCTOS_BY_SEARCH_ERROR: Hubo un error inesperado al realizar la busqueda. Error: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("Error inesperado", false));
         }
     }
 

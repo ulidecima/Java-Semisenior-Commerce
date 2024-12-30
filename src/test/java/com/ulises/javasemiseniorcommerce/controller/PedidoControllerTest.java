@@ -220,15 +220,15 @@ public class PedidoControllerTest {
     void testGetAllProductosByUsuarioSuccess() {
         // Preparacion
         List<PedidoDto> pedidos = Arrays.asList(pedidoDto);
-        when(pedidoService.getPedidosByMail(usuarioEmail))
+        when(pedidoService.getPedidosByMail(usuarioEmail, 0, 5))
                 .thenReturn(pedidos);
 
         // Ejecucion
-        ResponseEntity<?> response = pedidoController.getPedidosByUsuario(usuarioEmail);
+        ResponseEntity<?> response = pedidoController.getPedidosByUsuario(usuarioEmail, 0, 5);
 
         // Verificacion
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(pedidos, response.getBody());
-        verify(pedidoService, times(1)).getPedidosByMail(usuarioEmail);
+        verify(pedidoService, times(1)).getPedidosByMail(usuarioEmail, 0, 5);
     }
 }

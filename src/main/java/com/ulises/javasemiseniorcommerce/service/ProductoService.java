@@ -8,6 +8,8 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -69,9 +71,10 @@ public class ProductoService {
      * Obtiene todos los productos
      * @return Lista de productos
      */
-    public List<ProductoDto> getAllProductos() {
+    public List<ProductoDto> getAllProductos(int page, int size) {
         logger.info("Obteniendo todos los productos...");
-        List<ProductoDto> productos = productoRepository.findAll().stream()
+        Pageable pageable = PageRequest.of(page, size);
+        List<ProductoDto> productos = productoRepository.findAll(pageable).stream()
                 .map(this::mapToDto)
                 .toList();
         logger.info("Total de productos encontrados: {}", productos.size());
@@ -150,5 +153,22 @@ public class ProductoService {
             logger.warn("Stock invalido para el producto: {}. Stock recibido: {}", productoDto.getNombre(), productoDto.getStockDisponible());
             throw new IllegalArgumentException("El stock debe ser mayor o igual que cero.");
         }
+    }
+
+    public List<ProductoDto> getProductosBySearch(String nombreProducto, Double precioMin, Double precioMax, int page, int size) {
+        if (nombreProducto == null || nombreProducto.isBlank()) {
+            return getAllProductos(page, size);
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        List<ProductoDto> productos = productoRepository
+                .searchProductosByPalabrasClave(nombreProducto.toLowerCase(), precioMin, precioMax, pageable)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+
+        logger.info("Total de productos encontrados: {}", productos.size());
+        return productos;
     }
 }

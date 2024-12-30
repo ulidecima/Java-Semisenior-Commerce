@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -214,7 +216,7 @@ public class ProductoServiceTest {
                 .thenReturn(List.of(productoModel, productoModel2));
 
         // Ejecucion
-        List<ProductoDto> resultado = productoService.getAllProductos();
+        List<ProductoDto> resultado = productoService.getAllProductos(0, 5);
 
         // Verificacion
         assertNotNull(resultado);
@@ -242,7 +244,7 @@ public class ProductoServiceTest {
                 .thenReturn(List.of());
 
         // Ejecucion
-        List<ProductoDto> resultado = productoService.getAllProductos();
+        List<ProductoDto> resultado = productoService.getAllProductos(0, 5);
 
         // Verificacion
         assertNotNull(resultado);

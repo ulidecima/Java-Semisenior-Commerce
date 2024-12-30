@@ -188,14 +188,14 @@ public class ProductoControllerTest {
     void testGetAllProductosSuccess() {
         // Preparacion
         List<ProductoDto> productos = List.of(productoDto);
-        when(productoService.getAllProductos()).thenReturn(productos);
+        when(productoService.getAllProductos(0, 5)).thenReturn(productos);
 
         // Ejecucion
-        ResponseEntity<?> response = productoController.getAllProductos();
+        ResponseEntity<?> response = productoController.getAllProductos(0, 5);
 
         // Verificacion
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(productos, response.getBody());
-        verify(productoService, times(1)).getAllProductos();
+        verify(productoService, times(1)).getAllProductos(0, 5);
     }
 }

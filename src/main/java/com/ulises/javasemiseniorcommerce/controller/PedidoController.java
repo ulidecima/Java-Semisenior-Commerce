@@ -151,10 +151,14 @@ public class PedidoController {
      */
     @Operation(summary = "Pedidos de usuario", description = "Devuelve todos los pedidos de un usuario registrado con el email proporcionado.")
     @GetMapping("/usuario/{email}")
-    public ResponseEntity<?> getPedidosByUsuario(@PathVariable String email) {
+    public ResponseEntity<?> getPedidosByUsuario(
+            @PathVariable String email,
+            @RequestParam int page,
+            @RequestParam int size
+    ) {
         logger.info("GET_PEDIDOS_USUARIO_REQUEST: email recibido: {}", email);
         try {
-            List<PedidoDto> pedidos = pedidoService.getPedidosByMail(email);
+            List<PedidoDto> pedidos = pedidoService.getPedidosByMail(email, page, size);
             logger.info("GET_PEDIDOS_USUARIO_SUCCESS: Se encontraron {} pedidos asociados al email {}", pedidos.size(), email);
             return ResponseEntity.ok(pedidos);
         } catch (UserNotFoundException e) {
