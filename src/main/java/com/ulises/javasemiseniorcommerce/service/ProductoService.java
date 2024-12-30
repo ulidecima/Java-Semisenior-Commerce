@@ -20,7 +20,7 @@ import java.util.List;
 public class ProductoService {
 
     private final ProductoRepository productoRepository;
-    private static final Logger logger = LoggerFactory.getLogger(UsuarioService.class);
+    private static final Logger logger = LoggerFactory.getLogger(ProductoService.class);
 
     /**
      * Crea un producto nuevo
