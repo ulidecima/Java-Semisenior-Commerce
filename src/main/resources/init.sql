@@ -41,10 +41,15 @@ CREATE TABLE detalles (
                           FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE
 );
 
--- Insertar datos de ejemplo
-
 -- Insertar productos
-INSERT INTO productos (nombre, descripcion, precio, stockDisponible)
-VALUES ('Remera', 'Remera de algodón', 15.50, 100),
-       ('Pantalon', 'Pantalon de jean', 30.00, 50);
+INSERT INTO productos (precio, stockDisponible, descripcion, nombre)
+VALUES (15.50, 100, 'Remera de algodón', 'Remera'),
+       (30.00, 50, 'Pantalon de jean', 'Pantalon'),
+       (100.0, 100, 'Camisetas de algodon color verde', 'Camiseta'),
+       (220.5, 90, 'Camisas de lino color verde', 'Camisa'),
+       (2040.5, 90, 'Camisas de lino color naranja', 'Camisa'),
+       (1200.5, 90, 'Camisas de lino color amarillo', 'Camisa'),
+       (32400.5, 90, 'Camisas de lino color rosa', 'Camisa'),
+       (10.5, 90, 'Camisas de lino color azul', 'Camisa'),
+       (2.5, 90, 'Camisas de lino color violeta', 'Camisa');
 
