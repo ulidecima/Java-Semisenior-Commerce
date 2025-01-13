@@ -34,10 +34,10 @@ CREATE TABLE pedidos (
 -- Crear la tabla detalles
 CREATE TABLE detalles (
                           id SERIAL PRIMARY KEY,
-                          producto_id INT NOT NULL,
+                          producto_id INT,
                           pedido_id INT NOT NULL,
                           cantidad INT NOT NULL,
-                          FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE,
+                          FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE SET NULL,
                           FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE
 );
 
