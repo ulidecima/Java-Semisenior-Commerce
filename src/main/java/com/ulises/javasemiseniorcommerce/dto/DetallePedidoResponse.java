@@ -1,5 +1,6 @@
 package com.ulises.javasemiseniorcommerce.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,9 +14,12 @@ import java.util.List;
 
 /**
  * @author ulide
+ *
+ * Clase DTO para devolver datos al cliente.
  */
 @Value
 @Builder
+@Schema(description = "Datos de los detalles de un pedido.")
 public class DetallePedidoResponse {
 
     @NotBlank(message = "Nombre usuario obligatorio.")

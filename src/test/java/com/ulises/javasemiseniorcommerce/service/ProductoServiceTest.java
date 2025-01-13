@@ -1,17 +1,23 @@
 package com.ulises.javasemiseniorcommerce.service;
 
 import com.ulises.javasemiseniorcommerce.dto.ProductoDto;
-import com.ulises.javasemiseniorcommerce.exception.ProductoNotFoundException;
+import com.ulises.javasemiseniorcommerce.dto.ProductoRequest;
+import com.ulises.javasemiseniorcommerce.exception.notfound.ProductoNotFoundException;
 import com.ulises.javasemiseniorcommerce.model.ProductoModel;
 import com.ulises.javasemiseniorcommerce.repository.ProductoRepository;
+import com.ulises.javasemiseniorcommerce.testUtils.TestDataFactory;
 import com.ulises.javasemiseniorcommerce.testUtils.TestLoggerExtension;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +29,7 @@ import static org.mockito.Mockito.*;
  * @author ulide
  */
 @ExtendWith(TestLoggerExtension.class)
+@ExtendWith(MockitoExtension.class)
 public class ProductoServiceTest {
 
     @InjectMocks
@@ -31,222 +38,178 @@ public class ProductoServiceTest {
     @Mock
     private ProductoRepository productoRepository;
 
-    private ProductoModel productoModel;
-    private ProductoDto productoDto;
+    @Nested
+    @DisplayName("ProductoService Create Tests")
+    class productoServiceCreateTests {
+        @Test
+        @DisplayName("Deberia crear un producto correctamente")
+        void testCreateProductoSuccess() {
+            // Preparacion
+            ProductoModel producto = TestDataFactory.crearProductoModel();
+            ProductoRequest productoRequest = TestDataFactory.crearProductoRequest();
 
-    private final static Long productoId = 1L;
-    private final static String nombre = "Test Producto";
-    private final static String descripcion = "Test Descripcion";
-    private final static Integer stock = 1;
-    private final static double precio = 1.0;
+            when(productoRepository.save(any(ProductoModel.class)))
+                    .thenReturn(producto);
 
-    @BeforeEach
-    void setup() {
-        MockitoAnnotations.openMocks(this);
+            // Ejecucion
+            ProductoDto result = productoService.createProducto(productoRequest);
 
-        productoModel = ProductoModel.builder()
-                .id(productoId)
-                .nombre(nombre)
-                .descripcion(descripcion)
-                .stockDisponible(stock)
-                .precio(precio)
-                .build();
-
-        productoDto = ProductoDto.builder()
-                .id(productoId)
-                .nombre(nombre)
-                .descripcion(descripcion)
-                .stockDisponible(stock)
-                .precio(precio)
-                .build();
+            // Verificacion
+            assertEquals(productoRequest.getNombre(), result.getNombre());
+            assertEquals(productoRequest.getDescripcion(), result.getDescripcion());
+            assertEquals(productoRequest.getStockDisponible(), result.getStockDisponible());
+            assertEquals(productoRequest.getPrecio(), result.getPrecio());
+            verify(productoRepository, times(1)).save(any(ProductoModel.class));
+        }
     }
 
-    @Test
-    @DisplayName("Deberia crear un producto correctamente")
-    void testCreateProductoSuccess() {
-        // Preparacion
-        when(productoRepository.save(any(ProductoModel.class)))
-                .thenReturn(productoModel);
+    @Nested
+    @DisplayName("ProductoService Get Tests")
+    class productoServiceGetTests {
+        @Test
+        @DisplayName("Deberia retornar la informacion de un producto correctamente")
+        void testGetProductoSuccess() {
+            // Preparacion
+            ProductoModel productoModel = TestDataFactory.crearProductoModel();
 
-        // Ejecucion
-        productoService.createProducto(productoDto);
+            when(productoRepository.findById(productoModel.getId()))
+                    .thenReturn(Optional.of(productoModel));
 
-        // Verificacion
-        assertEquals(nombre, productoModel.getNombre());
-        assertEquals(descripcion, productoModel.getDescripcion());
-        assertEquals(stock, productoModel.getStockDisponible());
-        assertEquals(precio, productoModel.getPrecio());
-        verify(productoRepository, times(1)).save(any(ProductoModel.class));
+            // Ejecucion
+            ProductoDto result = productoService.getProductoById(productoModel.getId());
+
+            // Verificacion
+            assertNotNull(result);
+            assertEquals(productoModel.getNombre(), result.getNombre());
+            assertEquals(productoModel.getDescripcion(), result.getDescripcion());
+            assertEquals(productoModel.getStockDisponible(), result.getStockDisponible());
+            assertEquals(productoModel.getPrecio(), result.getPrecio());
+            verify(productoRepository, times(1)).findById(productoModel.getId());
+        }
+
+        @Test
+        @DisplayName("Deberia lanzar una ProductoNotFOundException")
+        void testGetProductoNotFound() {
+            // Preparacion
+            Long productoId = 1L;
+            when(productoRepository.findById(productoId))
+                    .thenReturn(Optional.empty());
+
+            // Ejecucion
+            ProductoNotFoundException exception = assertThrows(ProductoNotFoundException.class,
+                    () -> productoService.getProductoById(productoId));
+
+            // Verificacion
+            assertEquals("Producto no encontrado con ID: " + productoId, exception.getMessage());
+            verify(productoRepository, times(1)).findById(productoId);
+        }
+
+        @Test
+        @DisplayName("Deberia retornar todos los productos de la base de datos correctamente")
+        void testGetAllProductos() {
+            // Preparacion
+            Pageable pageable = PageRequest.of(0, 5);
+            ProductoModel productoModel = TestDataFactory.crearProductoModel();
+            List<ProductoModel> productos = List.of(productoModel);
+            Page<ProductoModel> pageProductos = new PageImpl<>(productos);
+
+            when(productoRepository.findAll(pageable))
+                    .thenReturn(pageProductos);
+
+            // Ejecucion
+            Page<ProductoDto> resultado = productoService.getAllProductos(null, null, 0, 5);
+
+            // Verificacion
+            assertNotNull(resultado);
+            assertEquals(productos.size(), resultado.getContent().size());
+            for (int i = 0; i < resultado.getContent().size(); i++) {
+                assertEquals(productos.get(i).getNombre(), resultado.getContent().get(i).getNombre());
+                assertEquals(productos.get(i).getDescripcion(), resultado.getContent().get(i).getDescripcion());
+                assertEquals(productos.get(i).getStockDisponible(), resultado.getContent().get(i).getStockDisponible());
+                assertEquals(productos.get(i).getPrecio(), resultado.getContent().get(i).getPrecio());
+            }
+            verify(productoRepository, times(1)).findAll(pageable);
+        }
+
+        @Test
+        @DisplayName("Deberia retornar una lista vacia")
+        void testGetAllProductosEmpty() {
+            // Preparacion
+            Pageable pageable = PageRequest.of(0, 5);
+            when(productoRepository.findAll(pageable))
+                    .thenReturn(Page.empty());
+
+            // Ejecucion
+            Page<ProductoDto> resultado = productoService.getAllProductos(null, null,0, 5);
+
+            // Verificacion
+            assertNotNull(resultado);
+            assertTrue(resultado.isEmpty());
+            verify(productoRepository, times(1)).findAll(pageable);
+        }
     }
 
-    @Test
-    @DisplayName("Deberia lanzar una RuntimeException")
-    void testCreateProductoFail() {
-        // Preparacion
-        when(productoRepository.save(any(ProductoModel.class)))
-                .thenThrow(new RuntimeException("Error al guardar el producto"));
+    @Nested
+    @DisplayName("ProductoService Update Tests")
+    class ProductoServiceUpdateTests {
+        @Test
+        @DisplayName("Deberia actualizar los datos de un producto correctamente")
+        void testUpdateProductoSuccess() {
+            // Preparacion
+            Long productoId = 1L;
+            ProductoRequest productoRequest = TestDataFactory.crearProductoRequest();
+            ProductoModel productoModel = TestDataFactory.crearProductoModel();
 
-        // Ejecucion
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            productoService.createProducto(productoDto);
-        });
+            when(productoRepository.findById(productoId))
+                    .thenReturn(Optional.of(productoModel));
 
-        // Verificacion
-        assertEquals("Error al crear el producto.", exception.getMessage());
-        verify(productoRepository, times(1)).save(any(ProductoModel.class));
+            // Ejecucion
+            ProductoDto result = productoService.updateProducto(productoId, productoRequest);
+
+            // Verificacion
+            assertEquals(result.getNombre(), productoModel.getNombre());
+            assertEquals(result.getDescripcion(), productoModel.getDescripcion());
+            assertEquals(result.getStockDisponible(), productoModel.getStockDisponible());
+            assertEquals(result.getPrecio(), productoModel.getPrecio());
+            verify(productoRepository, times(1)).save(productoModel);
+        }
+
+        @Test
+        @DisplayName("Deberia lanzar una ProductoNotFoundException")
+        void testProductoNotFound() {
+            // Preparacion
+            ProductoRequest productoRequest = TestDataFactory.crearProductoRequest();
+            Long productoId = 1L;
+            when(productoRepository.findById(productoId))
+                    .thenReturn(Optional.empty());
+
+            // Ejecucion
+            ProductoNotFoundException exception = assertThrows(ProductoNotFoundException.class,
+                    () -> productoService.updateProducto(1L, productoRequest));
+
+            // Verificacion
+            assertEquals("Producto no encontrado con ID: " + productoId, exception.getMessage());
+            verify(productoRepository, never()).save(any());
+        }
     }
 
-    @Test
-    @DisplayName("Deberia retornar la informacion de un producto correctamente")
-    void testGetProductoSuccess() {
-        // Preparacion
-        when(productoRepository.findById(productoId))
-                .thenReturn(Optional.of(productoModel));
+    @Nested
+    @DisplayName("ProductoService Delete Tests")
+    class productoServiceDeleteTests {
+        @Test
+        @DisplayName("Deberia eliminar un producto correctamente")
+        void testDeleteProductoSUccess() {
+            // Preparacion
+            Long productoId = 1L;
+            ProductoModel productoModel = TestDataFactory.crearProductoModel();
+            when(productoRepository.findById(productoId))
+                    .thenReturn(Optional.of(productoModel));
 
-        // Ejecucion
-        ProductoDto result = productoService.getProductoById(productoId);
-
-        // Verificacion
-        assertNotNull(result);
-        assertEquals(nombre, result.getNombre());
-        assertEquals(descripcion, result.getDescripcion());
-        assertEquals(stock, result.getStockDisponible());
-        assertEquals(precio, result.getPrecio());
-        verify(productoRepository, times(1)).findById(productoId);
-    }
-
-    @Test
-    @DisplayName("Deberia lanzar una ProductoNotFOundException")
-    void testGetProductoNotFound() {
-        // Preparacion
-        when(productoRepository.findById(productoId))
-                .thenReturn(Optional.empty());
-
-        // Ejecucion
-        ProductoNotFoundException exception = assertThrows(ProductoNotFoundException.class, () -> {
-            productoService.getProductoById(productoId);
-        });
-
-        // Verificacion
-        assertEquals("Producto no encontrado con ID: " + productoId, exception.getMessage());
-        verify(productoRepository, times(1)).findById(productoId);
-    }
-
-    @Test
-    @DisplayName("Deberia actualizar los datos de un producto correctamente")
-    void testUpdateProductoSuccess() {
-        // Preparacion
-        when(productoRepository.findById(productoId))
-                .thenReturn(Optional.of(productoModel));
-
-        // Ejecucion
-        productoService.updateProducto(productoId, productoDto);
-
-        // Verificacion
-        assertEquals(productoDto.getNombre(), productoModel.getNombre());
-        assertEquals(productoDto.getDescripcion(), productoModel.getDescripcion());
-        assertEquals(productoDto.getStockDisponible(), productoModel.getStockDisponible());
-        assertEquals(productoDto.getPrecio(), productoModel.getPrecio());
-        verify(productoRepository, times(1)).save(productoModel);
-    }
-
-    @Test
-    @DisplayName("Deberia lanzar una ProductoNotFoundException")
-    void testProductoNotFound() {
-        // Preparacion
-        when(productoRepository.findById(1L))
-                .thenReturn(Optional.empty());
-
-        // Ejecucion
-        ProductoNotFoundException exception = assertThrows(ProductoNotFoundException.class, () -> {
-            productoService.updateProducto(1L, productoDto);
-        });
-
-        // Verificacion
-        assertEquals("Producto no encontrado con ID: " + productoId, exception.getMessage());
-        verify(productoRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("Deberia eliminar un producto correctamente")
-    void testDeleteProductoSUccess() {
-        // Preparacion
-        when(productoRepository.findById(productoId))
-                .thenReturn(Optional.of(productoModel));
-
-        // Ejecucion
-        productoService.deleteProducto(productoId);
-
-        // Verificacion
-        verify(productoRepository, times(1)).delete(productoModel);
-    }
-
-    @Test
-    @DisplayName("Deberia lanzar una ProductoNotFoundException")
-    void testDeeleteProductoNotFound() {
-        // Preparacion
-        when(productoRepository.findById(productoId))
-                .thenReturn(Optional.empty());
-
-        // Ejecucion
-        ProductoNotFoundException exception = assertThrows(ProductoNotFoundException.class, () -> {
+            // Ejecucion
             productoService.deleteProducto(productoId);
-        });
 
-        // Verificacion
-        assertEquals("Producto no encontrado con ID: " + productoId, exception.getMessage());
-        verify(productoRepository, never()).delete(any());
-    }
-
-    @Test
-    @DisplayName("Deberia retornar todos los productos de la base de datos correctamente")
-    void testGetAllProductos() {
-        // Preparacion
-        ProductoModel productoModel2 = ProductoModel.builder()
-                .id(2L)
-                .nombre("Test Producto 2")
-                .descripcion("Test Descripcion 2")
-                .stockDisponible(9)
-                .precio(20.0)
-                .build();
-
-        when(productoRepository.findAll())
-                .thenReturn(List.of(productoModel, productoModel2));
-
-        // Ejecucion
-        List<ProductoDto> resultado = productoService.getAllProductos(0, 5);
-
-        // Verificacion
-        assertNotNull(resultado);
-
-        assertEquals(2, resultado.size());
-        assertEquals(nombre, resultado.get(0).getNombre());
-
-        assertEquals(descripcion, resultado.get(0).getDescripcion());
-        assertEquals(stock, resultado.get(0).getStockDisponible());
-        assertEquals(precio, resultado.get(0).getPrecio());
-
-        assertEquals(productoModel2.getNombre(), resultado.get(1).getNombre());
-        assertEquals(productoModel2.getDescripcion(), resultado.get(1).getDescripcion());
-        assertEquals(productoModel2.getStockDisponible(), resultado.get(1).getStockDisponible());
-        assertEquals(productoModel2.getPrecio(), resultado.get(1).getPrecio());
-
-        verify(productoRepository, times(1)).findAll();
-    }
-
-    @Test
-    @DisplayName("Deberia retornar una lista vacia")
-    void testGetAllProductosEmpty() {
-        // Preparacion
-        when(productoRepository.findAll())
-                .thenReturn(List.of());
-
-        // Ejecucion
-        List<ProductoDto> resultado = productoService.getAllProductos(0, 5);
-
-        // Verificacion
-        assertNotNull(resultado);
-        assertTrue(resultado.isEmpty());
-        verify(productoRepository, times(1)).findAll();
+            // Verificacion
+            verify(productoRepository, times(1)).delete(productoModel);
+        }
     }
 }

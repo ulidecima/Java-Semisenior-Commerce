@@ -1,7 +1,11 @@
 package com.ulises.javasemiseniorcommerce.service;
 
 import com.ulises.javasemiseniorcommerce.dto.*;
-import com.ulises.javasemiseniorcommerce.exception.*;
+import com.ulises.javasemiseniorcommerce.exception.badrquest.PedidoSinProductosException;
+import com.ulises.javasemiseniorcommerce.exception.badrquest.StockInsuficienteException;
+import com.ulises.javasemiseniorcommerce.exception.notfound.PedidoNotFoundException;
+import com.ulises.javasemiseniorcommerce.exception.notfound.ProductoNotFoundException;
+import com.ulises.javasemiseniorcommerce.exception.notfound.UserNotFoundException;
 import com.ulises.javasemiseniorcommerce.model.DetalleModel;
 import com.ulises.javasemiseniorcommerce.model.PedidoModel;
 import com.ulises.javasemiseniorcommerce.model.ProductoModel;
@@ -13,6 +17,7 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,6 +38,12 @@ public class PedidoService {
     private final ProductoRepository productoRepository;
     private static final Logger logger = LoggerFactory.getLogger(PedidoService.class);
 
+    /**
+     * Crea un pedido.
+     *
+     * @param pedidoRequest Datos del pedido que se desea realizar (email del usuario, productos, cantidad)
+     * @return PedidoDto con los datos del pedido.
+     */
     @Transactional
     public PedidoDto createPedido(PedidoRequest pedidoRequest) {
         logger.info("Creando pedido para el usuario: {}", pedidoRequest.getUsername());
@@ -40,11 +51,13 @@ public class PedidoService {
         UsuarioModel usuario = usuarioRepository.findByEmail(pedidoRequest.getUsername())
                 .orElseThrow(() -> {
                             logger.warn("Usuario no encontrado con email: {}", pedidoRequest.getUsername());
+                            // Excepcion por si el usuario no existe
                             return new UserNotFoundException("Usuario no encontrado con email: " + pedidoRequest.getUsername());
                         });
 
         if (pedidoRequest.getDetalles().isEmpty()) {
             logger.warn("EL pedido no puede ser de cero productos");
+            // Excepcion por si no se agregan productos al pedido
             throw new PedidoSinProductosException("El pedido debe contener al menos un producto.");
         }
 
@@ -60,6 +73,7 @@ public class PedidoService {
                     ProductoModel producto = productoRepository.findById(detalle.getProductoId())
                             .orElseThrow(() -> {
                                 logger.warn("Producto no encontrado con ID: {}", detalle.getProductoId());
+                                // Excepcion por si el producto no existe
                                 return new ProductoNotFoundException("No se ha encontrado el producto");
                             });
 
@@ -67,9 +81,11 @@ public class PedidoService {
                         logger.warn("Stock insuficiente para el producto: {}. El stock disponible es {}.",
                                 producto.getNombre(),
                                 producto.getStockDisponible());
+                        // Excepcion por si el stock del producto es insuficiente
                         throw new StockInsuficienteException("Stock insuficiente para el producto: " + producto.getNombre());
                     }
 
+                    // Se actualiza el valor del stock
                     producto.setStockDisponible(producto.getStockDisponible() - detalle.getCantidad());
                     productoRepository.save(producto);
 
@@ -94,6 +110,12 @@ public class PedidoService {
         return mapToDto(pedidoModel);
     }
 
+    /**
+     * Obtiene los datos de un pedido en base a un ID.
+     *
+     * @param id ID del pedido buscado.
+     * @return PedidoDto con los datos del pedido.
+     */
     @Transactional
     public PedidoDto getPedidoById(Long id) {
         logger.info("Buscando pedido con ID: {}", id);
@@ -109,28 +131,40 @@ public class PedidoService {
 
     }
 
+    /**
+     * Obtiene la lista de productos que hay en un pedido en base a la ID del pedido.
+     *
+     * @param id ID del pedido.
+     * @return List<ProductoCantidad> Lista con los productos y cantidades del pedido.
+     */
     @Transactional
-    public List<DetalleDto> listProductos(Long id) {
+    public List<ProductoCantidad> listProductos(Long id) {
         logger.info("Listando productos del pedido con ID: {}", id);
         PedidoModel pedido = pedidoRepository.findById(id)
-                .orElseThrow(() -> {
-                    logger.warn("Pedido no encontrado con ID: {}", id);
-                    return new PedidoNotFoundException("Pedido no encontrado con ID: " + id);
-                });
+                // Excepcion por si el pedido no existe
+                .orElseThrow(() -> new PedidoNotFoundException("Pedido no encontrado con ID: " + id));
 
-        List<DetalleDto> detalles = pedido.getDetalles().stream()
-                .map(detalle -> DetalleDto.builder()
-                        .id(detalle.getId())
-                        .productoId(detalle.getProducto().getId())
+        List<ProductoCantidad> productos = pedido.getDetalles().stream()
+                .map(detalle -> ProductoCantidad.builder()
+                        .nombreProducto(detalle.getProducto() != null ?
+                                // En caso de que se haya eliminado el producto se escribe este mensaje de no disponibilidad
+                                detalle.getProducto().getNombre() : "Producto no disponible")
                         .cantidad(detalle.getCantidad())
-                        .precio(detalle.getProducto().getPrecio())
+                        .precioUnidad(detalle.getProducto() != null ?
+                                // En caso de que se haya eliminado el producto se pone el valor del precio en 0
+                                detalle.getProducto().getPrecio() : 0.0)
                         .build()
                 ).toList();
 
-        logger.info("Se encontraron {} productos en el pedido con ID: {}", detalles.size(), id);
-        return detalles;
+        logger.info("Se encontraron {} productos en el pedido con ID: {}", productos.size(), id);
+        return productos;
     }
 
+    /**
+     * Obtiene los detalles (productos, precio total y por unidad, usuario, fecha de creacion) de un pedido en base a la ID del pedido.
+     * @param id ID del pedido.
+     * @return DetallePedidoResponse Datos del detalle del pedido buscado (productos, precio total y por unidad, usuario, fecha de creacion).
+     */
     @Transactional
     public DetallePedidoResponse getDetalleDePedido(Long id) {
         logger.info("Obteniendo detalles del pedido con ID: {}", id);
@@ -138,68 +172,73 @@ public class PedidoService {
         PedidoModel pedido = pedidoRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.warn("Pedido no encontrado con ID: {}", id);
+                    // Excepcion por si el pedido no existe
                     return new PedidoNotFoundException("Pedido no encotrado con ID: " + id);
                 });
 
         List<ProductoCantidad> productos = pedido.getDetalles().stream()
                 .map(detalle -> ProductoCantidad.builder()
-                        .nombreProducto(detalle.getProducto().getNombre())
+                        .nombreProducto(detalle.getProducto() != null ?
+                                // En caso de que se haya eliminado el producto se escribe este mensaje de no disponibilidad
+                                detalle.getProducto().getNombre() : "Producto no disponible")
                         .cantidad(detalle.getCantidad())
+                        .precioUnidad(detalle.getProducto() != null ?
+                                // En caso de que se haya eliminado el producto se pone el valor del precio en 0
+                                detalle.getProducto().getPrecio() : 0.0)
                         .build())
                 .toList();
-
-        double precioTotal = pedido.getDetalles().stream().mapToDouble(producto ->
-                producto.getCantidad() * producto.getProducto().getPrecio()
-        ).sum();
 
         return DetallePedidoResponse.builder()
                 .username(pedido.getUsuario().getUsername())
                 .productos(productos)
-                .precioTotal(precioTotal)
+                .precioTotal(pedido.getPrecio())
                 .fechaDeCreacion(LocalDateTime.now())
                 .build();
     }
 
+    /**
+     * Elimina un pedido en base a un ID.
+     * @param id ID del pedido que se quiere eliminar.
+     */
+    @Transactional
     public void deletePedido(Long id) {
         logger.info("Eliminando pedido con ID: {}", id);
 
-        PedidoModel pedido = pedidoRepository.findById(id)
-                .orElseThrow(() -> {
-                    logger.warn("Pedido no encontrado con ID: {}", id);
-                    return new PedidoNotFoundException("No se ha encontrado el pedido con ID: " + id);
-                });
-
-        pedidoRepository.delete(pedido);
+        pedidoRepository.findById(id).ifPresent(pedidoRepository::delete);
         logger.info("Pedido eliminado correctamente con ID: {}", id);
     }
 
+    /**
+     * Obtiene todos los pedidos de un usuario en base al correo electronico del usuario.
+     * @param email Correo electronico del usuario.
+     * @param page Numero de pagina.
+     * @param size Tamanio de la muestra.
+     * @return Page<PedidoDto> Pagina con los datos obtenidos.
+     */
     @Transactional
-    public List<PedidoDto> getPedidosByMail(String email, int page, int size) {
+    public Page<PedidoDto> getPedidosByMail(String email, int page, int size) {
         logger.info("Buscando pedidos para el usuario con email: {}", email);
 
         UsuarioModel usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> {
-                    logger.warn("Usuario no encontrado con email: {}", email);
-                    return new UserNotFoundException("Usuario no encontrado con email: " + email);
-                });
+                // Excepcion por si el usuario no existe
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con email: " + email));
 
         Pageable pageable = PageRequest.of(page, size);
 
-        List<PedidoDto> pedidos = pedidoRepository.findAllByUsuario_Id(usuario.getId(), pageable).stream()
-                .map(this::mapToDto)
-                .toList();
+        Page<PedidoModel> pedidos = pedidoRepository.findAllByUsuario_Id(usuario.getId(), pageable);
 
-        logger.info("Se encontraron {} pedidos para el usuario con email: {}", pedidos.size(), email);
-        return pedidos;
+        return pedidos.map(this::mapToDto);
     }
 
+    // Metodo para mapear un PedidoModel hacia un PedidoDto
     private PedidoDto mapToDto(PedidoModel pedido) {
         List<DetalleDto> detalles = pedido.getDetalles().stream()
                 .map(detalle -> DetalleDto.builder()
                         .id(detalle.getId())
-                        .productoId(detalle.getProducto().getId())
+                        .productoId(detalle.getProducto() != null ? detalle.getProducto().getId() : null)
                         .cantidad(detalle.getCantidad())
-                        .precio(detalle.getCantidad() * detalle.getProducto().getPrecio())
+                        .precio(detalle.getProducto() != null ?
+                                detalle.getCantidad() * detalle.getProducto().getPrecio() : null)
                         .build()
                 ).toList();
 

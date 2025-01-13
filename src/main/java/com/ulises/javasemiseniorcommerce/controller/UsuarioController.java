@@ -1,20 +1,20 @@
 package com.ulises.javasemiseniorcommerce.controller;
 
-import com.ulises.javasemiseniorcommerce.dto.ApiResponse;
 import com.ulises.javasemiseniorcommerce.dto.UsuarioDto;
-import com.ulises.javasemiseniorcommerce.exception.UserNotFoundException;
+import com.ulises.javasemiseniorcommerce.dto.UsuarioRequest;
 import com.ulises.javasemiseniorcommerce.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 /**
  * Controlador REST para gestionar usuarios
+ *
  * @author ulide
  */
 @Tag(name = "Usuarios", description = "Endpoint para gestionar usuarios")
@@ -24,74 +24,63 @@ import org.springframework.web.bind.annotation.*;
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
-    private static final Logger logger = LoggerFactory.getLogger(UsuarioController.class);
 
     /**
-     * Obtiene informacion de un usuario mediante su email
-     * @param email es el Email del usuario
-     * @return Informacion del usuario
+     * Obtiene informacion de un usuario mediante su email.
+     *
+     * @param email es el Email del usuario.
+     * @return Informacion del usuario.
      */
-    @Operation(summary = "Obtener usuario", description = "Retorna la informacion de un usuario registrado con el email proporcionado.")
+    @Operation(
+            summary = "Obtener usuario",
+            description = "Retorna la informacion de un usuario registrado con el email proporcionado.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Usuario encontrado exitosamente."),
+                    @ApiResponse(responseCode = "404", description = "Usuario no encontrado.")
+            }
+    )
     @GetMapping("/info/{email}")
-    public ResponseEntity<?> getUsuario(@PathVariable("email") String email) {
-        logger.info("GET_USUARIO_REQUEST: email recibido: {}", email);
-        try {
-            UsuarioDto usuario = usuarioService.getUsuario(email);
-            logger.info("GET_USUARIO_SUCCESS: Usuario encontrado con email {}", email);
-            return ResponseEntity.ok(usuario);
-        } catch (UserNotFoundException e) {
-            logger.warn("GET_USUARIO_WARNING: Usuario no encontrado con email {}", email);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse("Usuario no encontrado", false));
-        } catch (Exception e) {
-            logger.error("GET_USUARIO_ERROR: Error obteniendo el usuario con email {}. Error {}", email, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("Error al obtener el usuario.", false));
-        }
+    public ResponseEntity<UsuarioDto> getUsuario(@PathVariable("email") String email) {
+        UsuarioDto usuario = usuarioService.getUsuario(email);
+        return ResponseEntity.ok(usuario);
     }
 
     /**
-     * Actualiza la informacion de un usuario existente
-     * @param email es el Email del usuario
-     * @param usuarioDto Son los datos actualizados del usuario
-     * @return Mensaje de exito
+     * Actualiza la informacion de un usuario existente.
+     *
+     * @param email          es el Email del usuario.
+     * @param usuarioRequest Son los datos actualizados del usuario.
+     * @return Usuario con los datos actualizados.
      */
-    @Operation(summary = "Actualizar usuario", description = "Actualiza la informacion de un usuario con el email proporcionado.")
+    @Operation(
+            summary = "Actualizar usuario",
+            description = "Actualiza la informacion de un usuario con el email proporcionado.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Usuario actualizado exitosamente."),
+                    @ApiResponse(responseCode = "400", description = "Argumentos invalidos."),
+                    @ApiResponse(responseCode = "404", description = "Usuario no encontrado.")})
     @PutMapping("/{email}")
-    public ResponseEntity<ApiResponse> updateUsuario(
+    public ResponseEntity<UsuarioDto> updateUsuario(
             @PathVariable("email") String email,
-            @Valid @RequestBody UsuarioDto usuarioDto) {
-        logger.info("UPDATE_USUARIO_REQUEST: Email: {}", email);
-
-        try {
-            usuarioService.updateUsuario(email, usuarioDto);
-            return ResponseEntity.ok(new ApiResponse("UPDATE_USUARIO_SUCCESS: Usuario actualizado correctamente", true));
-        } catch (UserNotFoundException e) {
-            logger.warn("UPDATE_USUARIO_WARNING: Usuario no encontrado con email: {}. Error {}", email, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse("Usuario no encontrado", false));
-        } catch (Exception e) {
-            logger.error("UPDATE_USUARIO_ERROR: Error actualizando usuario con email: {}. Error: {}", email, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("Error al actualizar el usuario", false));
-        }
+            @Valid @RequestBody UsuarioRequest usuarioRequest) {
+        UsuarioDto usuarioDto = usuarioService.updateUsuario(email, usuarioRequest);
+        return ResponseEntity.ok(usuarioDto);
     }
 
     /**
-     * Elimina un usuario existente
-     * @param email Es el email del usuario que se va a eliminar
-     * @return Mensaje de exito
+     * Elimina un usuario existente.
+     *
+     * @param email Es el email del usuario que se va a eliminar.
+     * @return Mensaje sin contenido.
      */
-    @Operation(summary = "Eliminar usuario", description = "Elimina un usuario registrado con el email proporcionado.")
+    @Operation(
+            summary = "Eliminar usuario",
+            description = "Elimina un usuario registrado con el email proporcionado.",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Usuario eliminado exitosamente.")})
     @DeleteMapping("/{email}")
-    public ResponseEntity<ApiResponse> deleteUsuario(@PathVariable String email) {
-        logger.info("DELETE_USUARIO_REQUEST: Email recibido: {}", email);
-
-        try {
-            usuarioService.deleteUsuario(email);
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-        } catch (UserNotFoundException e) {
-            logger.warn("DELETE_USUARIO_WARNING: Usuario no encontrado con email: {}. Error {}", email, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse("Usuario no encontrado", false));
-        } catch (Exception e) {
-            logger.error("DELETE_USUARIO_ERROR: Error eliminando usuario con email: {}. Error: {}", email, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("Error al eliminar el usuario", false));
-        }
+    public ResponseEntity<String> deleteUsuario(@PathVariable String email) {
+        usuarioService.deleteUsuario(email);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

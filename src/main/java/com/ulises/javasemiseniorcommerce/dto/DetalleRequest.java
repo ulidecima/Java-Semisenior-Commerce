@@ -1,5 +1,6 @@
 package com.ulises.javasemiseniorcommerce.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Builder;
@@ -7,9 +8,12 @@ import lombok.Value;
 
 /**
  * @author ulide
+ *
+ * Clase DTO para recibir datos del cliente.
  */
 @Value
 @Builder
+@Schema(description = "Datos necesarios para crear un detalle de un pedido. Se agrupan en una lista que se indexa un PedidoRequest")
 public class DetalleRequest {
 
     @NotNull(message = "ID de producto obligatorio.")

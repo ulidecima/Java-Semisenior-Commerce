@@ -1,17 +1,20 @@
 package com.ulises.javasemiseniorcommerce.service;
 
 import com.ulises.javasemiseniorcommerce.dto.UsuarioDto;
-import com.ulises.javasemiseniorcommerce.exception.UserNotFoundException;
+import com.ulises.javasemiseniorcommerce.dto.UsuarioRequest;
+import com.ulises.javasemiseniorcommerce.exception.notfound.UserNotFoundException;
 import com.ulises.javasemiseniorcommerce.model.UsuarioModel;
 import com.ulises.javasemiseniorcommerce.repository.UsuarioRepository;
+import com.ulises.javasemiseniorcommerce.testUtils.TestDataFactory;
 import com.ulises.javasemiseniorcommerce.testUtils.TestLoggerExtension;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
@@ -22,6 +25,7 @@ import static org.mockito.Mockito.*;
  * @author ulide
  */
 @ExtendWith(TestLoggerExtension.class)
+@ExtendWith(MockitoExtension.class)
 public class UsuarioServiceTest {
 
     @InjectMocks
@@ -30,129 +34,117 @@ public class UsuarioServiceTest {
     @Mock
     private UsuarioRepository usuarioRepository;
 
-    private UsuarioModel usuarioModel;
-    private UsuarioDto usuarioDto;
+    @Nested
+    @DisplayName("UsuarioService Get Tests")
+    class UsuarioServiceGetTests {
 
-    private static String nombre = "Test usuario";
-    private static String email = "test@mail.com";
-    private static String password = "password";
-    private static boolean habilitado = true;
+        @Test
+        @DisplayName("Deberia devolver la informacion completa de un usuario")
+        void testGetUsuarioSuccess() {
+            // Preparacion
+            UsuarioModel usuario = UsuarioModel.builder()
+                    .nombre("Usuario Test")
+                    .email("test@mail.com")
+                    .build();
 
-    @BeforeEach
-    void setup() {
-        MockitoAnnotations.openMocks(this);
+            when(usuarioRepository.findByEmail(usuario.getEmail()))
+                    .thenReturn(Optional.of(usuario));
 
-        usuarioModel = UsuarioModel.builder()
-                .id(1L)
-                .nombre(nombre)
-                .email(email)
-                .password(password)
-                .habilitado(habilitado)
-                .build();
+            // Ejecucion
+            UsuarioDto result = usuarioService.getUsuario(usuario.getEmail());
 
-        usuarioDto = UsuarioDto.builder()
-                .id(1L)
-                .nombre(nombre)
-                .email(email)
-                .password(password)
-                .habilitado(habilitado)
-                .build();
+            // Verificacion
+            assertNotNull(result);
+            assertEquals(usuario.getNombre(), result.getNombre());
+            assertEquals(usuario.getEmail(), result.getEmail());
+            verify(usuarioRepository, times(1)).findByEmail(usuario.getEmail());
+        }
+
+        @Test
+        @DisplayName("Deberia lanzar una UsuarioNotFoundException")
+        void testGetUsuarioNotFound() {
+            // Preparacion
+            UsuarioModel usuario = UsuarioModel.builder()
+                    .email("test@mail.com")
+                    .build();
+            when(usuarioRepository.findByEmail(usuario.getEmail()))
+                    .thenReturn(Optional.empty());
+
+            // Ejecucion
+            UserNotFoundException exception = assertThrows(UserNotFoundException.class,
+                    () -> usuarioService.getUsuario(usuario.getEmail()));
+
+            // Verificacion
+            assertEquals("Usuario no encontrado.", exception.getMessage());
+            verify(usuarioRepository, times(1)).findByEmail(usuario.getEmail());
+        }
     }
 
-    @Test
-    @DisplayName("Deberia devolver la informacion completa de un usuario")
-    void testGetUsuarioSuccess() {
-        // Preparacion
-        when(usuarioRepository.findByEmail(email))
-                .thenReturn(Optional.of(usuarioModel));
+    @Nested
+    @DisplayName("UsuarioService Update Tests")
+    class UsuarioServiceUpdateTests {
+        @Test
+        @DisplayName("Deberia actualizar un usuario correctamente")
+        void testUpdateUsuarioSuccess() {
+            // Preparacion
+            UsuarioModel usuario = TestDataFactory.crearUsuarioModel();
+            UsuarioRequest usuarioRequest = TestDataFactory.crearUsuarioRequest();
+            when(usuarioRepository.findByEmail(usuario.getEmail()))
+                    .thenReturn(Optional.of(usuario));
 
-        // Ejecucion
-        UsuarioDto result = usuarioService.getUsuario(email);
+            // Ejecucion
+            usuarioService.updateUsuario(usuario.getEmail(), usuarioRequest);
 
-        // Verificacion
-        assertNotNull(result);
-        assertEquals(nombre, result.getNombre());
-        verify(usuarioRepository, times(1)).findByEmail(email);
+            // Verificacion
+            ArgumentCaptor<UsuarioModel> captor = ArgumentCaptor.forClass(UsuarioModel.class);
+            verify(usuarioRepository).save(captor.capture());
+            UsuarioModel updatedUser = captor.getValue();
+
+            assertEquals(usuarioRequest.getNombre(), updatedUser.getNombre());
+            assertEquals(usuarioRequest.getEmail(), updatedUser.getEmail());
+        }
+
+        @Test
+        @DisplayName("Deberia lanzar una UserNotFoundException")
+        void testUpdateUsuarioNotFound() {
+            // Preparacion
+            UsuarioModel usuario = UsuarioModel.builder()
+                    .email("test@mail.com")
+                    .build();
+            UsuarioRequest usuarioRequest = UsuarioRequest.builder()
+                    .email(usuario.getEmail())
+                    .build();
+            when(usuarioRepository.findByEmail(usuario.getEmail())).thenReturn(Optional.empty());
+
+            // Ejecucion
+            UserNotFoundException exception = assertThrows(UserNotFoundException.class,
+                    () -> usuarioService.updateUsuario(usuario.getEmail(), usuarioRequest));
+
+            // Verificacion
+            assertEquals("Usuario no encontrado.", exception.getMessage());
+            verify(usuarioRepository, never()).save(any());
+        }
     }
 
-    @Test
-    @DisplayName("Deberia lanzar una UsuarioNotFoundException")
-    void testGetUsuarioNotFound() {
-        // Preparacion
-        when(usuarioRepository.findByEmail(email))
-                .thenReturn(Optional.empty());
+    @Nested
+    @DisplayName("UsuarioService Delete Tests")
+    class UsuarioServiceDeleteTests {
+        @Test
+        @DisplayName("Deberia eliminar un usuario correctamente")
+        void testDeleteUsuarioSuccess() {
+            // Preparacion
+            UsuarioModel usuario = UsuarioModel.builder()
+                    .email("test@mail.com")
+                    .build();
+            when(usuarioRepository.findByEmail(usuario.getEmail())).thenReturn(Optional.of(usuario));
 
-        // Ejecucion
-        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> {
-            usuarioService.getUsuario(email);
-        });
+            // Ejecucion
+            usuarioService.deleteUsuario(usuario.getEmail());
 
-        // Verificacion
-        assertEquals("Usuario no encontrado", exception.getMessage());
-        verify(usuarioRepository, times(1)).findByEmail(email);
-    }
-
-    @Test
-    @DisplayName("Deberia actualizar un usuario correctamente")
-    void testUpdateUsuarioSuccess() {
-        // Preparacion
-        when(usuarioRepository.findByEmail(email))
-                .thenReturn(Optional.of(usuarioModel));
-
-        // Ejecucion
-        usuarioService.updateUsuario(email, usuarioDto);
-
-        // Verificacion
-        assertEquals(usuarioDto.getNombre(), usuarioModel.getNombre());
-        assertEquals(usuarioDto.getEmail(), usuarioModel.getEmail());
-        assertEquals(usuarioDto.getPassword(), usuarioModel.getPassword());
-        assertEquals(usuarioDto.isHabilitado(), usuarioModel.isHabilitado());
-        verify(usuarioRepository, times(1)).save(usuarioModel);
-    }
-
-    @Test
-    @DisplayName("Deberia lanzar una UserNotFoundException")
-    void testUpdateUsuarioNotFound() {
-        // Preparacion
-        when(usuarioRepository.findByEmail(email)).thenReturn(Optional.empty());
-
-        // Ejecucion
-        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> {
-            usuarioService.updateUsuario(email, usuarioDto);
-        });
-
-        // Verificacion
-        assertEquals("Usuario no encontrado", exception.getMessage());
-        verify(usuarioRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("Deberia eliminar un usuario correctamente")
-    void testDeleteUsuarioSuccess() {
-        // Preparacion
-        when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuarioModel));
-
-        // Ejecucion
-        usuarioService.deleteUsuario(email);
-
-        // Verificacion
-        verify(usuarioRepository, times(1)).delete(usuarioModel);
-    }
-
-    @Test
-    @DisplayName("Deberia lanzar una UserNotFOundException")
-    void testDeleteUsuarioNotFound() {
-        // Preparacion
-        when(usuarioRepository.findByEmail(email)).thenReturn(Optional.empty());
-
-        // Ejecucion
-        UserNotFoundException exception = assertThrows(UserNotFoundException.class, () -> {
-            usuarioService.deleteUsuario(email);
-        });
-
-        // Verificacion
-        assertEquals("Usuario no encontrado", exception.getMessage());
-        verify(usuarioRepository, never()).delete(any());
+            // Verificacion
+            verify(usuarioRepository, times(1)).findByEmail(usuario.getEmail());
+            verify(usuarioRepository, times(1)).delete(usuario);
+        }
     }
 }
 

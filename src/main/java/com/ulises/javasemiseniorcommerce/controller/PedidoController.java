@@ -1,14 +1,15 @@
 package com.ulises.javasemiseniorcommerce.controller;
 
 import com.ulises.javasemiseniorcommerce.dto.*;
-import com.ulises.javasemiseniorcommerce.exception.*;
 import com.ulises.javasemiseniorcommerce.service.PedidoService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,148 +26,110 @@ import java.util.List;
 public class PedidoController {
 
     private final PedidoService pedidoService;
-    private static final Logger logger = LoggerFactory.getLogger(PedidoController.class);
 
     /**
-     * Obtiene un pedido mediante su ID
-     * 
-     * @param id ID del pedido
-     * @return Informacion del pedido
+     * Obtiene un pedido mediante su ID.
+     *
+     * @param id ID del pedido.
+     * @return Informacion del pedido.
      */
-    @Operation(summary = "Obtener pedido", description = "Devuelve la informacion de un pedido mediante un ID.")
+    @Operation(
+            summary = "Obtener pedido",
+            description = "Devuelve la informacion de un pedido mediante un ID.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Pedido encontrado exitosamente."),
+                    @ApiResponse(responseCode = "404", description = "Pedido no encontrado.")})
     @GetMapping("/{id}")
-    public ResponseEntity<?> getPedidoById(@PathVariable Long id) {
-        logger.info("GET_PEDIDO_REQUEST: ID recibido: {}", id);
-        
-        try {
-            PedidoDto pedido = pedidoService.getPedidoById(id);
-            logger.info("GET_PEDIDO_SUCCESS: Pedido obtenido con ID: {}", id);
-            return ResponseEntity.ok(pedido);
-        } catch (PedidoNotFoundException e) {
-            logger.warn("GET_PEDIDO_ERROR: Pedido no encontrado con ID: {}", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse("Pedido no encontrado.", false));
-        } catch (Exception e) {
-            logger.error("GET_PEDIDO_ERROR: Hubo un error inseperado al obtener pedido con ID: {}. Error: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("Error al obtener el pedido", false));
-        }
+    public ResponseEntity<PedidoDto> getPedidoById(@PathVariable Long id) {
+        PedidoDto pedido = pedidoService.getPedidoById(id);
+        return ResponseEntity.ok(pedido);
     }
 
     /**
-     * Obtiene los productos de un pedido a partir del ID del pedido
+     * Obtiene los productos de un pedido a partir del ID del pedido.
      *
-     * @param id ID del pedido
-     * @return Lista de productos
+     * @param id ID del pedido.
+     * @return Lista de productos.
      */
-    @Operation(summary = "Obtener productos de pedido", description = "Devuelve los productos que contiene un pedido mediante la ID del pedido.")
+    @Operation(
+            summary = "Obtener productos de pedido",
+            description = "Devuelve los productos que contiene un pedido mediante la ID del pedido.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Productos encontrados."),
+                    @ApiResponse(responseCode = "404", description = "Pedido no encontrado.")})
     @GetMapping("/{id}/productos")
-    public ResponseEntity<?> listProductos(@PathVariable Long id) {
-        logger.info("GET_PRODUCTOS_PEDIDO_REQUEST: ID recibido: {}", id);
-        try {
-            List<DetalleDto> productos = pedidoService.listProductos(id);
-            logger.info("GET_PRODUCTOS_PEDIDO_SUCCESS: El pedido con ID {} contiene {} productos", id, productos.size());
-            return ResponseEntity.ok(productos);
-        } catch (PedidoNotFoundException e) {
-            logger.warn("GET_PRODUCTOS_PEDIDO_ERROR: Pedido no encontrado con ID: {}. Error: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse("Pedido no encontrado.", false));
-        } catch (Exception e) {
-            logger.error("GET_PRODUCTOS_PEDIDO_ERROR: Error inesperado al listar los productos del pedido con ID: {}. Error: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("Error inesperado", false));
-        }
+    public ResponseEntity<List<ProductoCantidad>> listProductos(@PathVariable Long id) {
+        List<ProductoCantidad> productos = pedidoService.listProductos(id);
+        return ResponseEntity.ok(productos);
     }
 
     /**
-     * Obtiene el detalle completo de un pedido a partir del ID
-     * @param id ID del pedido
-     * @return Informacion del pedido
-     */
-    @Operation(summary = "Obtener detalle de pedido", description = "Devuelve el detalle del pedido (Productos, cantidad, precio de los productos y precio total).")
-    @GetMapping("/{id}/detalle")
-    public ResponseEntity<?> getDetalle(@PathVariable Long id) {
-        logger.info("GET_DETALLE_PEDIDO_REQUEST: ID recibido: {}", id);
-        
-        try {
-            DetallePedidoResponse pedido = pedidoService.getDetalleDePedido(id);
-            logger.info("GET_DETALLE_PEDIDO_SUCCESS: Detalle obtenido para el pedido con ID: {}", id);
-            return ResponseEntity.ok(pedido);
-        } catch (PedidoNotFoundException e) {
-            logger.warn("GET_DETALLE_PEDIDO_ERROR: Pedido no encontrado con ID: {}. Error: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse("Pedido no encontrado", false));
-        } catch (Exception e) {
-            logger.error("GET_DETALLE_PEDIDO_ERROR: hubo un error inesperado al obtener el detalle del pedido con ID: {}. Error: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("Error al obtener el detalle del pedido.", false));
-        }
-    }
-
-    /**
-     * Crea un nuevo pedido
+     * Obtiene el detalle completo de un pedido a partir del ID.
      *
-     * @param pedidoRequest Datos para crear del pedido
-     * @return Pedido creado
+     * @param id ID del pedido.
+     * @return Informacion del pedido.
      */
-    @Operation(summary = "Crear pedido", description = "Crea un pedido.")
+    @Operation(
+            summary = "Obtener detalle de pedido",
+            description = "Devuelve el detalle del pedido (Productos, cantidad, precio de los productos y precio total).",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Detalle del pedido encontrado exitosamente."),
+                    @ApiResponse(responseCode = "404", description = "Pedido no encontrado.")})
+    @GetMapping("/{id}/detalle")
+    public ResponseEntity<DetallePedidoResponse> getDetalle(@PathVariable Long id) {
+        DetallePedidoResponse pedido = pedidoService.getDetalleDePedido(id);
+        return ResponseEntity.ok(pedido);
+    }
+
+    /**
+     * Crea un nuevo pedido.
+     *
+     * @param pedidoRequest Datos para crear del pedido.
+     * @return Pedido creado.
+     */
+    @Operation(
+            summary = "Crear pedido",
+            description = "Crea un pedido.",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Pedido creado exitosamente."),
+                    @ApiResponse(responseCode = "400", description = "Argumentos invalidos.")})
     @PostMapping
-    public ResponseEntity<ApiResponse> createPedido(@Valid @RequestBody PedidoRequest pedidoRequest) {
-        logger.info("CREATE_PEDIDO_REQUES: Datos recibidos: {}", pedidoRequest);
-        try {
-            PedidoDto pedido = pedidoService.createPedido(pedidoRequest);
-            logger.info("CREATE_PEDIDO_SUCCESS: Pedido creado con ID: {}", pedido.getId());
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse("Pedido creado correctamente.", true));
-        } catch (UserNotFoundException | ProductoNotFoundException |
-                 StockInsuficienteException | PedidoSinProductosException e) {
-            logger.warn("CREATE_PEDIDO_ERROR: Hubo un error de validacion al crear el pedido. Error: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse("Datos invalidos", false));
-        } catch (Exception e) {
-            logger.error("CREATE_PEDIDO_ERROR: Hubo un error al crear el pedido, Error: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("Error inesperado al crear pedido", false));
-        }
+    public ResponseEntity<PedidoDto> createPedido(@Valid @RequestBody PedidoRequest pedidoRequest) {
+        PedidoDto pedido = pedidoService.createPedido(pedidoRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(pedido);
     }
 
     /**
-     * Elimina un pedido
-     * 
-     * @param id ID del pedido que se quiere eliminar
-     * @return Mensaje de exito
+     * Elimina un pedido.
+     *
+     * @param id ID del pedido que se quiere eliminar.
+     * @return Mensaje sin contenido.
      */
-    @Operation(summary = "Eliminar pedido", description = "Elimina un pedido mediante un ID.")
+    @Operation(
+            summary = "Eliminar pedido",
+            description = "Elimina un pedido mediante un ID.",
+            responses = {@ApiResponse(responseCode = "204", description = "Pedido eliminado exitosamente.")})
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse> deletePedido(@PathVariable Long id) {
-        logger.info("DELETE_PEDIDO_REQUEST: ID recibido: {}", id);
-        try {
-            pedidoService.deletePedido(id);
-            logger.info("DELETE_PEDIDO_SUCCESS: Pedido eliminado con ID: {}", id);
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-        } catch (PedidoNotFoundException e) {
-            logger.warn("DELETE_PEDIDO_ERROR: Pedido no encontrado con ID: {}. Error {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse("Pedido no encontrado", false));
-        } catch (Exception e) {
-            logger.error("DELETE_PEDIDO_ERROR: Hubo un error inesperado al eliminar el pedido con ID: {}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("Error inesperado al eliminar el pedido", false));
-        }
+    public ResponseEntity<String> deletePedido(@PathVariable Long id) {
+        pedidoService.deletePedido(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     /**
-     * Obtiene todos los pedidos asociados a un email
-     * @param email Email del usuario
-     * @return Lista de pedidos
+     * Obtiene todos los pedidos asociados a un email.
+     *
+     * @param email Email del usuario.
+     * @return Lista de pedidos.
      */
     @Operation(summary = "Pedidos de usuario", description = "Devuelve todos los pedidos de un usuario registrado con el email proporcionado.")
+    @ApiResponse(responseCode = "200", description = "Pedidos encontrados exitosamente.")
+    @ApiResponse(responseCode = "404", description = "Usuario no encontrado.")
     @GetMapping("/usuario/{email}")
-    public ResponseEntity<?> getPedidosByUsuario(
+    public ResponseEntity<Page<PedidoDto>> getPedidosByUsuario(
             @PathVariable String email,
-            @RequestParam int page,
-            @RequestParam int size
-    ) {
-        logger.info("GET_PEDIDOS_USUARIO_REQUEST: email recibido: {}", email);
-        try {
-            List<PedidoDto> pedidos = pedidoService.getPedidosByMail(email, page, size);
-            logger.info("GET_PEDIDOS_USUARIO_SUCCESS: Se encontraron {} pedidos asociados al email {}", pedidos.size(), email);
-            return ResponseEntity.ok(pedidos);
-        } catch (UserNotFoundException e) {
-            logger.warn("GET_PEDIDOS_USUARIO_ERROR: Usuario no encontrado con email: {}. Error {}", email, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse("Usuario no encontrado", false));
-        } catch (Exception e) {
-            logger.error("GET_PEDIDOS_USUARIO_ERROR: Error inesperado al obtener los pedidos del usuario con email: {}. Error: {}", email, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("Error inesperado", false));
-        }
+            @Valid @PositiveOrZero(message = "El numero de la pagina tiene que ser positivo.") @RequestParam(required = false, defaultValue = "0") int page,
+            @Valid @Positive(message = "El tamanio de la muestra tiene que ser mayor que cero.") @RequestParam(required = false, defaultValue = "5") int size) {
+        Page<PedidoDto> pedidos = pedidoService.getPedidosByMail(email, page, size);
+        return ResponseEntity.ok(pedidos);
     }
 }

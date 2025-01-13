@@ -1,4 +1,4 @@
-package com.ulises.javasemiseniorcommerce.exception;
+package com.ulises.javasemiseniorcommerce.exception.notfound;
 
 /**
  * @author ulide
@@ -6,9 +6,5 @@ package com.ulises.javasemiseniorcommerce.exception;
 public class UserNotFoundException extends RuntimeException {
     public UserNotFoundException(String message) {
         super(message);
-    }
-
-    public UserNotFoundException(String message, Throwable cause) {
-        super(message, cause);
     }
 }

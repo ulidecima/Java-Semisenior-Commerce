@@ -1,20 +1,22 @@
 package com.ulises.javasemiseniorcommerce.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
-import lombok.Value;
-
-import java.io.Serializable;
+import lombok.Data;
 
 /**
- * DTO for {@link com.ulises.javasemiseniorcommerce.model.ProductoModel}
+ * @author ulide
+ *
+ * Clase DTO para recibir datos del cliente.
  */
-@Value
+@Data
 @Builder
-@Schema(description = "Datos de un producto.")
-public class ProductoDto implements Serializable {
-    Long id;
+@Schema(description = "Datos necesarios para crear un producto.")
+public class ProductoRequest {
     @NotBlank(message = "Nombre obligatorio.")
     @Size(min = 10, max = 50, message = "El nombre debe tener entre 30 y 50 caracteres.")
     String nombre;

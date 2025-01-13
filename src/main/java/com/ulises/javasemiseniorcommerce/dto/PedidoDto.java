@@ -1,5 +1,6 @@
 package com.ulises.javasemiseniorcommerce.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
@@ -16,6 +17,7 @@ import java.util.List;
 @Value
 @Builder
 @Setter
+@Schema(description = "Datos de un pedido.")
 public class PedidoDto implements Serializable {
     Long id;
 

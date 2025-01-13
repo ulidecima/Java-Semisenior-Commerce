@@ -1,19 +1,24 @@
 package com.ulises.javasemiseniorcommerce.service;
 
-import com.ulises.javasemiseniorcommerce.exception.EmailAlreadyExistsException;
+import com.ulises.javasemiseniorcommerce.dto.AuthRequest;
+import com.ulises.javasemiseniorcommerce.dto.RegisterRequest;
+import com.ulises.javasemiseniorcommerce.exception.badrquest.EmailAlreadyExistsException;
+import com.ulises.javasemiseniorcommerce.exception.unhauthorizated.AuthenticationFailedException;
 import com.ulises.javasemiseniorcommerce.jwt.JwtService;
 import com.ulises.javasemiseniorcommerce.model.UsuarioModel;
 import com.ulises.javasemiseniorcommerce.repository.UsuarioRepository;
+import com.ulises.javasemiseniorcommerce.testUtils.TestDataFactory;
 import com.ulises.javasemiseniorcommerce.testUtils.TestLoggerExtension;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +31,7 @@ import static org.mockito.Mockito.*;
  * @author ulide
  */
 @ExtendWith(TestLoggerExtension.class)
+@ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
 
     @InjectMocks
@@ -43,90 +49,74 @@ public class AuthServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
-    private final String email = "test@mail.com";
-    private final String password = "password";
-    private final String nombre = "mockedJwtToken";
-    private final String token = "mocked-jwt-token";
+    private static final String TOKEN = "mocked-jwt-token";
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
+    @Nested
+    @DisplayName("Tests de login.")
+    class loginTests {
+        @Test
+        @DisplayName("Deberia autenticar correctamente y devolver un token JWT")
+        void testLoginSuccess() {
+            // Preparacion
+            AuthRequest authRequest = TestDataFactory.crearAuthRequest();
+            Authentication auth = mock(Authentication.class);
+            when(authenticationManager.authenticate(any())).thenReturn(auth);
+            when(jwtService.generateToken(any(), eq(authRequest.getEmail()))).thenReturn(TOKEN);
+
+            // Ejecucion
+            String result = authService.login(authRequest);
+
+            // Verificacion
+            verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+            verify(jwtService).generateToken(any(), eq(authRequest.getEmail()));
+            assertEquals(TOKEN, result, "El token JWT generado no coincide con el esperado.");
+        }
+
+        @Test
+        @DisplayName("Deberia lanzar una excepcion si la autenticacion falla")
+        void testLoginfFail() {
+            // Preparacion
+            AuthRequest authRequest = TestDataFactory.crearAuthRequest();
+            when(authenticationManager.authenticate(any())).thenThrow(new BadCredentialsException("Autenticacion fallida."));
+
+            // Ejecucion y Verificacion
+            AuthenticationFailedException exception = assertThrows(
+                    AuthenticationFailedException.class, () -> authService.login(authRequest));
+            assertEquals("Credenciales invalidas.", exception.getMessage());
+        }
     }
 
-    @Test
-    @DisplayName("Deberia autenticar correctamente y devolver un token JWT")
-    void testLoginSuccess() {
-        // Preparacion
-        Authentication auth = mock(Authentication.class);
-        when(authenticationManager
-                .authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(auth);
-        when(jwtService.generateToken(any(), eq(email)))
-                .thenReturn(token);
+    @Nested
+    @DisplayName("Tests para registro.")
+    class testRegister {
+        @Test
+        @DisplayName("Deberia registrar un usuario correctamente y generar un token JWT")
+        void testRegisterSuccess() {
+            // Preparacion
+            RegisterRequest registerRequest = TestDataFactory.crearRegisterRequest();
+            when(usuarioRepository.existsByEmail(registerRequest.getEmail())).thenReturn(false);
+            when(passwordEncoder.encode(registerRequest.getPassword())).thenReturn("encodedPassword");
+            when(jwtService.generateToken(any(), eq(registerRequest.getEmail()))).thenReturn(TOKEN);
 
-        // Ejecucion
-        String result = authService.login(email, password);
+            // Ejecucion
+            String result = authService.register(registerRequest);
 
-        // Verificacion
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        assertEquals(token, result, "El token JWT generado no coincide con el esperado.");
-    }
+            // Verificacion
+            verify(usuarioRepository).save(any(UsuarioModel.class));
+            assertEquals(TOKEN, result);
+        }
 
-    @Test
-    @DisplayName("Deberia lanzar una excepcion si la autenticacion falla")
-    void testLoginfFail() {
-        // Preparacion
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new RuntimeException("Autenticacion fallida."));
+        @Test
+        @DisplayName("Deberia lanzar una excepcion si ya existe un usuario registrado con el email proporcionado")
+        void testRegisterEmailActualmenteEnUso() {
+            // Preparacion
+            RegisterRequest registerRequest = TestDataFactory.crearRegisterRequest();
+            when(usuarioRepository.existsByEmail(registerRequest.getEmail())).thenReturn(true);
 
-        // Ejecucion y Verificacion
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> authService.login(email, password));
-        assertEquals("Error inespetado al autenticar usuario.", exception.getMessage());
-    }
-
-    @Test
-    @DisplayName("Deberia registrar un usuario correctamente y generar un token JWT")
-    void testRegisterSuccess() {
-        // Preparacion
-        when(usuarioRepository.existsByEmail(email)).thenReturn(false);
-        when(passwordEncoder.encode(password)).thenReturn("encodedPassword");
-        when(jwtService.generateToken(any(), eq(email))).thenReturn(token);
-
-        // Ejecucion
-        String result = authService.register(nombre, email, password);
-
-        // Verificacion
-        verify(usuarioRepository).save(any(UsuarioModel.class));
-        verify(jwtService).generateToken(any(), eq(email));
-        assertEquals(token, result);
-    }
-
-    @Test
-    @DisplayName("Deberia lanzar una excepcion si ya existe un usuario registrado con el email proporcionado")
-    void testRegisterEmailActualmenteEnUso() {
-        // Preparacion
-        when(usuarioRepository.existsByEmail(email)).thenReturn(true);
-
-        // Ejecucion y verificacion
-        EmailAlreadyExistsException exception = assertThrows(EmailAlreadyExistsException.class, () -> {
-            authService.register(nombre, email, password);
-        });
-        assertEquals("Ya existe un usuario con este email.", exception.getMessage());
-    }
-
-    @Test
-    @DisplayName("Deberia lanzar una excepcion si ocurre algun error al guardar el usuario")
-    void testRegisterFail() {
-        // Preparacion: simulamos que el usuario ya existe para que falle la creacion
-        when(usuarioRepository.existsByEmail(email)).thenReturn(false);
-        when(passwordEncoder.encode(password)).thenReturn("encoded-Password");
-        when(usuarioRepository.save(any(UsuarioModel.class)))
-                .thenThrow(new RuntimeException("Error al guardar el usuario"));
-
-        // Ejecucion y verificacion
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            authService.register(nombre, email, password);
-        });
-        assertEquals("Error inespetado al registrar usuario.", exception.getMessage());
+            // Ejecucion y verificacion
+            EmailAlreadyExistsException exception = assertThrows(EmailAlreadyExistsException.class,
+                    () -> authService.register(registerRequest));
+            assertEquals("Ya existe un usuario con este email.", exception.getMessage());
+        }
     }
 }
