@@ -43,7 +43,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
         String token = authService.login(request);
-        return ResponseEntity.ok(new AuthResponse(token, "Usuario Autenticado"));
+        return ResponseEntity.ok(AuthResponse.builder().token(token).message("Usuario Autenticado").build());
     }
 
     /**
@@ -62,6 +62,6 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         String token = authService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new AuthResponse(token, "Usuario registrado."));
+        return ResponseEntity.status(HttpStatus.CREATED).body(AuthResponse.builder().token(token).message("Usuario registrado.").build());
     }
 }

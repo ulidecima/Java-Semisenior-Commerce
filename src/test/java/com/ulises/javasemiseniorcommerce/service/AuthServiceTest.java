@@ -2,13 +2,12 @@ package com.ulises.javasemiseniorcommerce.service;
 
 import com.ulises.javasemiseniorcommerce.dto.AuthRequest;
 import com.ulises.javasemiseniorcommerce.dto.RegisterRequest;
-import com.ulises.javasemiseniorcommerce.exception.badrquest.EmailAlreadyExistsException;
-import com.ulises.javasemiseniorcommerce.exception.unhauthorizated.AuthenticationFailedException;
+import com.ulises.javasemiseniorcommerce.exception.EmailAlreadyExistsException;
+import com.ulises.javasemiseniorcommerce.exception.AuthenticationFailedException;
 import com.ulises.javasemiseniorcommerce.jwt.JwtService;
 import com.ulises.javasemiseniorcommerce.model.UsuarioModel;
 import com.ulises.javasemiseniorcommerce.repository.UsuarioRepository;
 import com.ulises.javasemiseniorcommerce.testUtils.TestDataFactory;
-import com.ulises.javasemiseniorcommerce.testUtils.TestLoggerExtension;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -30,7 +29,6 @@ import static org.mockito.Mockito.*;
 /**
  * @author ulide
  */
-@ExtendWith(TestLoggerExtension.class)
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
 
@@ -116,7 +114,7 @@ public class AuthServiceTest {
             // Ejecucion y verificacion
             EmailAlreadyExistsException exception = assertThrows(EmailAlreadyExistsException.class,
                     () -> authService.register(registerRequest));
-            assertEquals("Ya existe un usuario con este email.", exception.getMessage());
+            assertEquals("El correo electronico ya esta registrado.", exception.getMessage());
         }
     }
 }

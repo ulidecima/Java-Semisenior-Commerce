@@ -3,15 +3,15 @@ package com.ulises.javasemiseniorcommerce.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 
 import java.io.Serializable;
 
 /**
  * DTO for {@link com.ulises.javasemiseniorcommerce.model.ProductoModel}
  */
-@Value
 @Builder
+@Data
 @Schema(description = "Datos de un producto.")
 public class ProductoDto implements Serializable {
     Long id;

@@ -4,8 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
-import lombok.Setter;
-import lombok.Value;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -14,9 +13,8 @@ import java.util.List;
 /**
  * DTO for {@link com.ulises.javasemiseniorcommerce.model.PedidoModel}
  */
-@Value
 @Builder
-@Setter
+@Data
 @Schema(description = "Datos de un pedido.")
 public class PedidoDto implements Serializable {
     Long id;

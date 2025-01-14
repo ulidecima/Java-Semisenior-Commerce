@@ -1,4 +1,4 @@
-package com.ulises.javasemiseniorcommerce.exception.badrquest;
+package com.ulises.javasemiseniorcommerce.exception;
 
 /**
  * @author ulide

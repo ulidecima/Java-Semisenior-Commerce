@@ -1,12 +1,5 @@
 package com.ulises.javasemiseniorcommerce.exception;
 
-import com.ulises.javasemiseniorcommerce.exception.badrquest.EmailAlreadyExistsException;
-import com.ulises.javasemiseniorcommerce.exception.badrquest.PedidoSinProductosException;
-import com.ulises.javasemiseniorcommerce.exception.badrquest.StockInsuficienteException;
-import com.ulises.javasemiseniorcommerce.exception.notfound.PedidoNotFoundException;
-import com.ulises.javasemiseniorcommerce.exception.notfound.ProductoNotFoundException;
-import com.ulises.javasemiseniorcommerce.exception.notfound.UserNotFoundException;
-import com.ulises.javasemiseniorcommerce.exception.unhauthorizated.AuthenticationFailedException;
 import jakarta.validation.ConstraintViolationException;
 import org.apache.tomcat.websocket.AuthenticationException;
 import org.slf4j.Logger;

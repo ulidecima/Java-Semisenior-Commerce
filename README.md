@@ -1,26 +1,36 @@
-# Proyecto: Java-Semisenior-Commerce
 
-## Descripción
+# Java-Semisenior-Commerce
 
-> Este proyecto es una API REST para gestionar productos. Permite realizar operaciones CRUD sobre productos, gestionar usuarios y realizar autenticación segura.
-> La clase UsuarioModel representa un Usuario con nombre, emial y contraseña
-> La clase ProductoModel representa un producto con nombre, descripcion, precio y cantidad (stock) disponible
-> La clase PedidoModel representa la solicitud que puede hacer un usuario para adquirir productos, puede ser un solo tipo de producto o varios
-> La clase DetalleModel representa el conjunto de productos de un mismo tipo, que están contenidas en un PedidoModel
----
+## Descripcion
+Este proyecto es una API REST para gestionar productos. Permite realizar operaciones CRUD sobre productos, gestionar usuarios y realizar autenticación segura.  
+La clase UsuarioModel representa un Usuario con nombre, emial y contraseña.  
+La clase ProductoModel representa un producto con nombre, descripcion, precio y cantidad (stock) disponible.  
+La clase PedidoModel representa la solicitud que puede hacer un usuario para adquirir productos, puede ser un solo tipo de producto o varios.  
+La clase DetalleModel representa el conjunto de productos de un mismo tipo, que están contenidas en un PedidoModel.
 
-## Instrucciones para ejecutar el proyecto
+## Prerrequisitos para ejecutar el proyecto
 
-### Configuración
+- **Java 17** o superior instalado.
+- **Maven** instalado.
+- Base de datos **PostgreSQL**.
+- Git
+- Clonar el proyecto:
+```bash
+  git clone https://github.com/ulidecima/Java-Semisenior-Commerce
+```
 
-El proyecto requiere un archivo `application.properties` para configurar el acceso a la base de datos y otras propiedades del entorno. Es necesario crear el archivo en la carpeta `src/main/resources` antes de ejecutar el proyecto.
+### Configuracion
+Antes de ejecutar el proyecto, configurar el archivo `application.properties` ubicado en `src/main/resources`. El archivo `application.properties.example` sirve de ejemplo, esta incluido en el repositorio.  
+En el proyecto, puede encontrarse el script de creacion de la base de datos `init.sql` ubicado en `src/main/resources`. Tambien contiene inserciones de datos de ejemplo para empezar a interactuar con la aplicacion.
 
-Usar el archivo de ejemplo `application.properties.example` incluido en el repositorio.
+#### Pasos para configurar:
+1. **Base de Datos:** Reemplazar `tu_base_datos`, `tu_usuario` y `tu_contraseña` con los valores correspondientes a la base de datos PostgreSQL.
+2. **Clave JWT:** Sustituir `clave` por una clave segura para firmar los tokens JWT.
 
-#### Ejemplo de configuración:
+#### Ejemplo de configuracion del archivo application.properties
 ```properties
     # Nombre de la aplicación
-    spring.application.name=Java-Semisenior-Commerce
+    spring.application name=Java-Semisenior-Commerce
     
     # Configuración de la base de datos
     spring.datasource.url=jdbc:postgresql://localhost:5432/tu_base_datos
@@ -31,243 +41,301 @@ Usar el archivo de ejemplo `application.properties.example` incluido en el repos
     # Configuración de JPA
     spring.jpa.hibernate.ddl-auto=create-drop
     spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+    # Clave para JWT
+    jwt.secret.key=clave
     
     # Swagger/OpenAPI
     springdoc.swagger-ui.enabled=true
     springdoc.swagger-ui.path=/swagger-ui
 ```
 
-## Configuración de la Clave JWT
+## Ejecutar la aplicacion
 
-La clave secreta utilizada para firmar los tokens JWT tiene que ser configurada en el archivo `application.properties`:
-
-1. Abrir el archivo `src/main/resources/application.properties`.
-2. Agregar la siguiente línea, reemplazando `clave` con tu propia clave:
-
-```properties
-    # Clave para JWT
-    jwt.secret.key=clave
+Moverse a la carpeta del proyecto
+```bash
+  cd Java-Semisenior-Commerce
 ```
 
-### Prerrequisitos
-- **Java 17** o superior instalado.
-- **Maven** (o Gradle) instalado.
-- Base de datos PostgreSQL.
+Construir el proyecto
+```bash
+  mvn clean install
+```
 
-## Inicializacion de la Base de Datos
-> Se incluye un SQL para configurar la base de datos y cargar datos iniciales, disponible en src/main/resources/sql/init.sql. Contiene el script de creacion de las tablas para usuarios, productos, pedidos y detalles, y la insercion de datos iniciales de productos para realizar pruebas.
+Iniciar la aplicacion
+```bash
+  mvn spring-boot:run
+```
 
-### Pasos
-1. Clonar el repositorio:
-    ```bash
-        git clone https://github.com/ulidecima/Java-Semisenior-Commerce.git
-        cd Java-Semisenior-Commerce
-    ```
-2. Compilar el proyecto:
-    ```bash
-        mvn clean install
-    ```
-3. Configurar el archivo application.properties
-+ Crear la base de datos.
-+ Configurar las credenciales y el acceso a la base de datos.
-4. Ejecutar la aplicacion
-    ```bash
-        mvn spring-boot:run
-    ```
-5. Acceder a la API en
-+ http://localhost:8080
-+ La documentación de Swagger se encuentra en: http://localhost:8080/swagger-ui
+## Ejecutar los tests
 
-## Endpoints
+El proyecto cuenta con una serie de tests que prueban el correcto funcionamiento de la capa de servicio (logica de negocio).
 
-A continuación, se detallan los principales endpoints de la API, junto con ejemplos de uso en **Postman**:
+```bash
+  mvn test
+```
+## Documentacion
 
-### **Autenticacion**
-#### **POST /auth**
-- **Descripción:** Autentica un usuario y devuelve un token JWT.
-- **Configuración en Postman:**
-1. Seleccionar método **POST**.
-2. Ingresar la URL: `http://localhost:8080/auth/login`.
-3. En la pestaña **Headers**, agregar:
-- **Key:** `Content-Type`
-- **Value:** `application/json`
-4. En la pestaña **Body**, seleccionar **raw** y colocar el siguiente JSON:
-    ```json
-        {
-            "email": "juan@email.com",
-            "password": "psswrd"
-        }
-    ```
-5. Hacer click en **Send**.
+- La interfaz de documentación de la API se encuentra aqui: `localhost:8080/swagger-ui`
+- La documentación en formato JSON se encuentra aqui: `localhost:8080/api-docs`
+## API Reference
+Todos los endpoints se encuentran en la siguiente url: `http://localhost:8080/`
 
-- **Respuesta esperada (200 OK):**
-    ```json
-        {
-            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-            "message": "Usuario Autenticado"
-        }
-    ```
-- **Respuesta esperada (401 Unauthorized):**
-    ```json
-        {
-            "message": "Credenciales invalidas.",
-            "success": false
-        }
-    ```
+Todos los endpoints (salvo los de Auth Endpoint) necesitan el sigueinte header:
 
-#### **POST /register**  
-- **Descripcion:** Registra un usuario y devuelve un token JWT.
-- **Configuracion en Postman:**
-1. Seleccionar método **POST**.
-2. Ingresar la URL: `http://localhost:8080/auth/register`.
-3. En la pestaña **Headers**, agregar:
-- **Key:** `Contenet-Type`
-- **Value:** `application/json`
-4. En la pestaña **Body**, seleccionar **raw** y colocar el siguiente JSON:
-    ```json
-        {
-            "nombre": "Juan",
-            "email": "juan@mail.com",
-            "password": "123passwrd"
-        }
-    ```
+| Header       | Type     | Description                 |
+| :----------- | :------- | :-------------------------- |
+| `Authorization` | `string` | **Required**. Bearer Token |
 
-### **Usuarios**
-## ** GET /usuario/{email}**
-- **Descripción:** Obtiene la informacion del perfil de un usuario mediante su email.
-- **Configuración en Postman:**
-1. Seleccionar el método **GET**.
-2. Ingresar la URL: `http://localhost:8080/usuario/info/email`.
-3. Reemplazar `email` por el email del usuario.
-4. Hacer click en **Send**
-- **Respuesta esperada**
-    ```json
-        {
-            "id": 1,
-            "nombre": "Juan",
-            "email": "juan@mail.com",
-            "password": "$2a$10$de66NB4lFMu.RRRe6IQroOynU2L7H7hmAd6o36Km46/udiSL/gELa",
-            "habilitado": true
-        }
-    ```
+### Auth Endpoint
+#### Logear un usuario
 
-### **Productos**
-#### **GET /productos**
-- **Descripción:** Obtiene una lista con los productos disponibles.
-- **Configuración en Postman:**
-1. Seleccionar el método **GET**.
-2. Ingresar la URL: `http://localhost:8080/productos`.
-3. Hacer click en **Send**
-- **Respuesta esperada**
-    ```json
-        [
-            {
-                "id": 1,
-                "nombre": "Producto A",
-                "descripcion": "Descripción del producto A",
-                "precio": 100.0,
-                "cantidad": 50
-            },
-            {
-                "id": 2,
-                "nombre": "Producto B",
-                "descripcion": "Descripción del producto B",
-                "precio": 150.0,
-                "cantidad": 30
-            }
-        ]
-    ```
+```http
+  POST /auth
+```
 
-#### **GET /productos/search**
-- **Descripción:** Obtiene una lista con los productos disponibles en base a los filtros de palabras clave y precios.
-- **Configuración en Postman:**
-1. Seleccionar el método **GET**.
-2. Ingresar la URL: `http://localhost:8080/search`.
-3. En la pestaña **Params** agregar:
-3. En la pestaña **Params** agregar:
-    - `palabraClave` que es la palabra clave por la cual vamos a buscar algun producto
-    - `precioMin` precio minimo del producto
-    - `precioMax` precio maximo del producto
-4. Hacer click en **Send**
+| Body         | Type     | Description                 |
+| :----------- | :------- | :-------------------------- |
+| `email`   | `String` | **Required**. Correo electronico.    |
+| `password`  | `String` | **Required**. Contraseña.  |
 
-#### **POST /productos**
-- **Descripción:** Crea un nuevo producto.
-- **Configuración en Postman:**
-1. Seleccionar el método **POST**.
-2. Ingresar la URL: `http://localhost:8080/productos`.
-3. En la pestaña **Headers**, agregar:
-- **Key:** `Content-Type`
-- **Value:** `application/json`
-4. En la pestaña **Body**, seleccionar **raw** y colocar el siguiente JSON:
-    ```json 
-        {
-            "nombre": "Producto C",
-            "descripcion": "Descripción del producto C",
-            "precio": 200.0,
-            "cantidad": 10
-        }
-    ```
-5. Hacer click en **Send**.
+Request de ejemplo:
+```json
+  {
+    "email": "email@mail.com",
+    "password": "password"
+  }
+```
 
-- **Respuesta esperada (201 Createsd):**
-    ```json
-        {
-            "id": 3,
-            "nombre": "Producto C",
-            "descripcion": "Descripción del producto C",
-            "precio": 200.0,
-            "cantidad": 10
-        }
-    ```
+#### Registrar un usuario
 
-### **Pedidos**
-#### **POST /pedidos**
-- **Descripción:** Crea un nuevo pedido con una lista de productos.
-- **Configuración en Postman:**
-1. Seleccionar el método **POST**.
-2. Ingresar la URL: `http://localhost:8080/pedidos`.
-3. En la pestaña **Headers**, agregar:
-- **Key:** `Content-Type`
-- **Value:** `application/json`
-4. En la pestaña **Body**, seleccionar **raw** y colocar el siguiente JSON:
-    ```json
-        {
-            "usuarioId": 1,
-            "productos": [
-                { "productoId": 1, "cantidad": 2 },
-                { "productoId": 2, "cantidad": 1 }
-            ]
-        }
-    ```
-5. Hacer click en **Send**.
+```http
+  POST /register
+```
+| Body         | Type     | Description                 |
+| :----------- | :------- | :-------------------------- |
+| `nombre`     | `String` | **Required**. Nombre de usuario.     |
+| `email`   | `String` | **Required**. Correo electronico.    |
+| `password`  | `String` | **Required**. Contraseña.  |
 
-- **Respuesta esperada (201 Createsd):**
-    ```json
-        {
-            "message": "Pedido creado exitosamente",
-            "pedidoId": 123
-        }
-    ```
+Request de ejemplo:
+```json
+  {
+    "nombre": "Nombre del usuario",
+    "email": "email@mail.com",
+    "password": "password"
+  }
+```
 
-#### **GET /pedidos/{id}/detalle**
-- **Descripción:** Obtiene el detalle de un pedido.
-- **Configuración en Postman:**
-1. Seleccionar el método **GET**.
-2. Ingresar la URL: `http://localhost:8080/id/pedidos`.
-3. Reemplazamos `id` de la url por el id del pedido del cual queremos conocer su detalle.
-4. Hacer click en **Send**.
+### Pedido Endpoint
+#### Obtener un pedido
 
-- **Respuesta esperada (200 OK):**
-    ```json
-        {
-            "username": "juan@mail.com",
-            "productos": [
-                {
-                    "nombreProducto": "Producto A",
-                    "cantidad": 1
-                }
-            ],
-            "precioTotal": 100.0,
-            "fechaDeCreacion": "2024-12-30T04:28:34.8578463"
-        }
-    ```
+```http
+  GET /pedido/{pedido_id}
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `pedido_id` | `Long` | **Required**. ID del pedido |
+
+#### Obtener los productos de un pedido
+
+```http
+  GET /pedido/{pedido_id}/productos
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `pedido_id` | `Long` | **Required**. ID del pedido |
+
+#### Obtener el detalle de un pedido
+
+```http
+  GET /pedido/{detalle_id}
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `detalle_id` | `Long` | **Required**. ID del detalle |
+
+#### Crear un pedido
+
+```http
+  POST /pedido
+```
+
+| Body         | Type     | Description                 |
+| :----------- | :------- | :-------------------------- |
+| `username`   | `string` | **Required**. User email    |
+| `detalles`   | `array`  | **Required**. Pedido details |
+
+Request de ejemplo:
+```json
+  {
+    "username": "example@mail.com",
+    "detalles": [
+      { "productoId": 1, "cantidad": 2 },
+      { "productoId": 2, "cantidad": 3 }
+    ]
+  }
+```
+
+#### Eliminar un pedido
+
+```http
+  DELETE /pedido/{detalle_id}
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `detalle_id` | `Long` | **Required**. ID del pedido. |
+
+#### Obtener todos los pedidos de un usuario
+
+```http
+  GET /pedido
+```
+
+| Query        | Type     | Description                 |
+| :----------- | :------- | :-------------------------- |
+| `usuario_email` | `string` | **Required**. Correo electronico del usuario. |
+
+### Producto Endpoint
+#### Obtener un producto
+
+```http
+  GET /producto/{producto_id}
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `producto_id` | `Long` | **Required**. ID del producto. |
+
+#### Obtener todos los productos
+
+```http
+  GET /producto
+```
+
+| Body | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `page` | `Integer` | **Optional**. Numero de pagina. |
+| `size` | `Integer` | **Optional**. Tamaño de muestra. |
+
+#### Crear un producto
+
+```http
+  POST /producto/{producto_request}
+```
+
+| Body         | Type     | Description                 |
+| :----------- | :------- | :-------------------------- |
+| `nombre`     | `String` | **Required**. Product name  |
+| `precio`     | `Double`  | **Required**. Product price |
+| `stockDisponible` | `Integer` | **Required**. Stock count |
+
+Request de ejemplo:
+```json
+  {
+    "nombre": "Producto",
+    "precio": 150.0,
+    "stockDisponible": 30
+  }
+```
+
+#### Actualizar un producto
+
+```http
+  PUT /producto/{producto_id}
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `producto_id` | `Long` | **Required**. ID del producto. |
+| `producto_request` | `json` | **Required**. Datos del producto que se quiere crear. |
+
+| Body         | Type     | Description                 |
+| :----------- | :------- | :-------------------------- |
+| `nombre`     | `String` | **Required**. Product name  |
+| `precio`     | `Double`  | **Required**. Product price |
+| `stockDisponible` | `Integer` | **Required**. Stock count |
+
+Request de ejemplo:
+```json
+  {
+    "nombre": "Producto actualizado",
+    "precio": 1500.0,
+    "stockDisponible": 50
+  }
+```
+
+#### Buscar productos
+
+```http
+  GET /producto/search
+```
+
+| Query | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `palabra_clave` | `String` | **Optional**. Palabra clave para realizar la busqueda. |
+| `precio_min` | `Double` | **Optional**. Precio minimo de productos. |
+| `precio_max` | `Double` | **Optional**. Precio maximo de productos. |
+| `page` | `Integer` | **Optional**. Numero de pagina. |
+| `size` | `Integer` | **Optional**. Tamaño de muestra. |
+
+#### Eliminar un producto
+
+```http
+  DELETE /producto/{producto_id}
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `producto_id` | `Long` | **Required**. ID del producto que se quiere eliminar. |
+
+### Usuario Endpoint
+#### Ver la informacion de un usuario
+
+```http
+  GET /usuario/info/{usuario_email}
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `usuario_email` | `String` | **Required**. Correo electronico del usuario. |
+
+#### Actualizar los datos de un usuario
+
+```http
+  PUT /usuario/{usuario_email}
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `usuario_email` | `String` | **Required**. Correo electronico del usuario. |
+
+| Body         | Type     | Description                 |
+| :----------- | :------- | :-------------------------- |
+| `nombre`     | `String` | **Required**. Nombre de usuario.     |
+| `email`   | `String` | **Required**. Correo electronico.    |
+| `password`  | `String` | **Required**. Contraseña.  |
+
+Request de ejemplo:
+```json
+  {
+    "nombre": "Nuevo Nombre",
+    "email": "emailnuevo@mail.com",
+    "password": "NuevoPassword"
+  }
+```
+
+#### Eliminar un usuario
+
+```http
+  DELETE /usuario/{usuario_email}
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `usuario_email` | `String` | **Required**. Correo electronico del usuario. |
+

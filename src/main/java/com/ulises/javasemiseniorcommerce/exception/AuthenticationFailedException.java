@@ -1,4 +1,4 @@
-package com.ulises.javasemiseniorcommerce.exception.unhauthorizated;
+package com.ulises.javasemiseniorcommerce.exception;
 
 /**
  * @author ulide

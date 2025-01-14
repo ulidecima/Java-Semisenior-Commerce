@@ -2,7 +2,7 @@ package com.ulises.javasemiseniorcommerce.service;
 
 import com.ulises.javasemiseniorcommerce.dto.ProductoDto;
 import com.ulises.javasemiseniorcommerce.dto.ProductoRequest;
-import com.ulises.javasemiseniorcommerce.exception.notfound.ProductoNotFoundException;
+import com.ulises.javasemiseniorcommerce.exception.ProductoNotFoundException;
 import com.ulises.javasemiseniorcommerce.model.ProductoModel;
 import com.ulises.javasemiseniorcommerce.repository.ProductoRepository;
 import jakarta.transaction.Transactional;

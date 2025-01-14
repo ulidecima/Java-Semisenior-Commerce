@@ -6,15 +6,15 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 
 /**
  * @author ulide
  *
  * Clase DTO para transferir datos entre el cliente y el controlador y el servicio.
  */
-@Value
 @Builder
+@Data
 @Schema(description = "Datos de un producto que se muestran al listar los productos de un pedido.")
 public class ProductoCantidad {
 

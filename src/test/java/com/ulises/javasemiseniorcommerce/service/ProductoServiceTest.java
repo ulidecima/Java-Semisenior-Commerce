@@ -2,11 +2,10 @@ package com.ulises.javasemiseniorcommerce.service;
 
 import com.ulises.javasemiseniorcommerce.dto.ProductoDto;
 import com.ulises.javasemiseniorcommerce.dto.ProductoRequest;
-import com.ulises.javasemiseniorcommerce.exception.notfound.ProductoNotFoundException;
+import com.ulises.javasemiseniorcommerce.exception.ProductoNotFoundException;
 import com.ulises.javasemiseniorcommerce.model.ProductoModel;
 import com.ulises.javasemiseniorcommerce.repository.ProductoRepository;
 import com.ulises.javasemiseniorcommerce.testUtils.TestDataFactory;
-import com.ulises.javasemiseniorcommerce.testUtils.TestLoggerExtension;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -28,7 +27,6 @@ import static org.mockito.Mockito.*;
 /**
  * @author ulide
  */
-@ExtendWith(TestLoggerExtension.class)
 @ExtendWith(MockitoExtension.class)
 public class ProductoServiceTest {
 

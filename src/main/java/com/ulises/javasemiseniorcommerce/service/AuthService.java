@@ -2,8 +2,8 @@ package com.ulises.javasemiseniorcommerce.service;
 
 import com.ulises.javasemiseniorcommerce.dto.AuthRequest;
 import com.ulises.javasemiseniorcommerce.dto.RegisterRequest;
-import com.ulises.javasemiseniorcommerce.exception.unhauthorizated.AuthenticationFailedException;
-import com.ulises.javasemiseniorcommerce.exception.badrquest.EmailAlreadyExistsException;
+import com.ulises.javasemiseniorcommerce.exception.AuthenticationFailedException;
+import com.ulises.javasemiseniorcommerce.exception.EmailAlreadyExistsException;
 import com.ulises.javasemiseniorcommerce.jwt.JwtService;
 import com.ulises.javasemiseniorcommerce.model.UsuarioModel;
 import com.ulises.javasemiseniorcommerce.repository.UsuarioRepository;

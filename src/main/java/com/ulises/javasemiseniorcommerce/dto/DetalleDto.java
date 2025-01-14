@@ -4,15 +4,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 
 import java.io.Serializable;
 
 /**
  * DTO for {@link com.ulises.javasemiseniorcommerce.model.DetalleModel}
  */
-@Value
 @Builder
+@Data
 @Schema(description = "Datos del detalle de un pedido.")
 public class DetalleDto implements Serializable {
     Long id;

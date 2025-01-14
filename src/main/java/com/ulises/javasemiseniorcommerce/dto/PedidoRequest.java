@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 
 import java.util.List;
 
@@ -13,8 +13,8 @@ import java.util.List;
  *
  * Clase DTO para recibir datos del cliente.
  */
-@Value
 @Builder
+@Data
 @Schema(description = "Datos necesarios para crear un pedido.")
 public class PedidoRequest {
 

@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,8 +17,8 @@ import java.util.List;
  *
  * Clase DTO para devolver datos al cliente.
  */
-@Value
 @Builder
+@Data
 @Schema(description = "Datos de los detalles de un pedido.")
 public class DetallePedidoResponse {
 

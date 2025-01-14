@@ -13,8 +13,8 @@ import lombok.Data;
  *
  * Clase DTO para recibir datos del cliente.
  */
-@Data
 @Builder
+@Data
 @Schema(description = "Datos necesarios para crear un producto.")
 public class ProductoRequest {
     @NotBlank(message = "Nombre obligatorio.")

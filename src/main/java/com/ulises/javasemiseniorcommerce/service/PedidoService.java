@@ -1,11 +1,11 @@
 package com.ulises.javasemiseniorcommerce.service;
 
 import com.ulises.javasemiseniorcommerce.dto.*;
-import com.ulises.javasemiseniorcommerce.exception.badrquest.PedidoSinProductosException;
-import com.ulises.javasemiseniorcommerce.exception.badrquest.StockInsuficienteException;
-import com.ulises.javasemiseniorcommerce.exception.notfound.PedidoNotFoundException;
-import com.ulises.javasemiseniorcommerce.exception.notfound.ProductoNotFoundException;
-import com.ulises.javasemiseniorcommerce.exception.notfound.UserNotFoundException;
+import com.ulises.javasemiseniorcommerce.exception.PedidoSinProductosException;
+import com.ulises.javasemiseniorcommerce.exception.StockInsuficienteException;
+import com.ulises.javasemiseniorcommerce.exception.PedidoNotFoundException;
+import com.ulises.javasemiseniorcommerce.exception.ProductoNotFoundException;
+import com.ulises.javasemiseniorcommerce.exception.UserNotFoundException;
 import com.ulises.javasemiseniorcommerce.model.DetalleModel;
 import com.ulises.javasemiseniorcommerce.model.PedidoModel;
 import com.ulises.javasemiseniorcommerce.model.ProductoModel;

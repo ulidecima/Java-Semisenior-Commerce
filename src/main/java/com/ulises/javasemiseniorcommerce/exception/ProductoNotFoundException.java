@@ -1,4 +1,4 @@
-package com.ulises.javasemiseniorcommerce.exception.notfound;
+package com.ulises.javasemiseniorcommerce.exception;
 
 /**
  * @author ulide
